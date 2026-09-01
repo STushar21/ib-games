@@ -28,12 +28,9 @@
   }
   * { box-sizing: border-box; }
   body {
-    background: var(--bg);
-    color: var(--ink);
+    background: var(--bg); color: var(--ink);
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    max-width: min(980px, 94vw);
-    margin: 32px auto 60px;
-    padding: 0 16px;
+    max-width: min(980px, 94vw); margin: 32px auto 60px; padding: 0 16px;
   }
   h1 { font-family: 'Source Serif 4', Georgia, serif; font-weight: 700; font-size: 26px; margin: 0 0 4px; }
   .sub { color: var(--ink-soft); font-size: 13px; margin-bottom: 22px; }
@@ -122,6 +119,7 @@
     padding: 46px 24px; text-align: center; margin-bottom: 18px;
     transition: background 0.15s ease, border-color 0.15s ease;
   }
+  .question-stage.compact { padding: 26px 24px; }
   .question-stage.flash-correct { background: var(--green-soft); border-color: var(--green); }
   .question-stage.flash-wrong { background: var(--red-soft); border-color: var(--red); }
   .q-text { font-family: 'Source Serif 4', Georgia, serif; font-size: 24px; font-weight: 700; margin-bottom: 6px; color: var(--ink); }
@@ -143,6 +141,19 @@
     cursor: pointer; font-size: 14px;
   }
   .hl-btn:hover { background: var(--gold-soft); }
+
+  .stmt-list { text-align: left; max-width: 380px; margin: 0 auto; }
+  .stmt-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 16px; border: 1px solid var(--border); border-radius: 5px;
+    margin-bottom: 7px; cursor: pointer; background: var(--bg);
+    transition: border-color 0.12s ease, background 0.12s ease;
+  }
+  .stmt-row:hover { border-color: var(--gold-dim); }
+  .stmt-row.correct-flag { border-color: var(--green); background: var(--green-soft); }
+  .stmt-row.wrong-flag { border-color: var(--red); background: var(--red-soft); }
+  .stmt-label { font-size: 13px; color: var(--ink-soft); }
+  .stmt-value { font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600; color: var(--ink); }
 
   #end-screen { display: none; text-align: center; padding: 44px 20px; }
   #end-screen .sub { text-transform: uppercase; letter-spacing: 0.1em; font-size: 11px; }
@@ -201,12 +212,19 @@
     <div class="game-card" data-game="multiple_match">
       <div class="g-index">02 / 08</div>
       <div class="g-name">Multiple Match</div>
-      <div class="g-desc">Call High or Low on a trading multiple before the clock runs out. Chain correct calls for a combo multiplier.</div>
+      <div class="g-desc">Call High or Low on a trading multiple before the clock runs out. Chain calls for a combo multiplier.</div>
       <span class="g-tag">Reflex · Combo</span>
       <div class="g-best" id="best-multiple_match">Best: —</div>
     </div>
 
-    <div class="game-card locked"><div class="g-index">03 / 08</div><div class="g-name">Spot the Red Flag</div><div class="g-desc">Something's off in these numbers — find it fast.</div><span class="g-tag">Coming soon</span></div>
+    <div class="game-card" data-game="spot_the_red_flag">
+      <div class="g-index">03 / 08</div>
+      <div class="g-name">Spot the Red Flag</div>
+      <div class="g-desc">One line in this statement is off. Find it before the timer runs out.</div>
+      <span class="g-tag">Reflex · 6s rounds</span>
+      <div class="g-best" id="best-spot_the_red_flag">Best: —</div>
+    </div>
+
     <div class="game-card locked"><div class="g-index">04 / 08</div><div class="g-name">Statement Sprint</div><div class="g-desc">Sort each line before the next one lands.</div><span class="g-tag">Coming soon</span></div>
     <div class="game-card locked"><div class="g-index">05 / 08</div><div class="g-name">Deal Chain</div><div class="g-desc">Trace the deal process without crossing your own path.</div><span class="g-tag">Coming soon</span></div>
     <div class="game-card locked"><div class="g-index">06 / 08</div><div class="g-name">Comp Grid</div><div class="g-desc">Place companies so every row and column checks out.</div><span class="g-tag">Coming soon</span></div>
@@ -252,6 +270,24 @@
       <button type="button" class="hl-btn" data-choice="low">LOW</button>
       <button type="button" class="hl-btn" data-choice="high">HIGH</button>
     </div>
+  </div>
+</div>
+
+<div id="play-screen-srf" style="display:none;">
+  <div class="play-head"><button class="play-back" id="back-btn-srf" type="button">&larr; Back to games</button></div>
+  <div class="hud-row">
+    <div class="stat-chip"><div class="label">Score</div><div class="value" id="srf-score">0</div></div>
+    <div class="timer-ring">
+      <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="52"></circle><circle class="ring-fill" id="srf-ring-fill" cx="60" cy="60" r="52"></circle></svg>
+      <div class="ring-label" id="srf-time">60</div>
+    </div>
+    <div class="stat-chip"><div class="label">Best</div><div class="value best" id="srf-best">—</div></div>
+  </div>
+  <div class="qtimer-track"><div class="qtimer-fill" id="srf-qtimer"></div></div>
+  <div class="question-stage compact" id="srf-question-stage">
+    <div class="q-text">Which line is off?</div>
+    <div class="q-subtext" id="srf-q-sub">Income Statement</div>
+    <div class="stmt-list" id="srf-stmt-list"></div>
   </div>
 </div>
 
@@ -309,7 +345,7 @@
     return streak;
   }
 
-  const GAME_LIST = ["mental_math_blitz", "multiple_match"];
+  const GAME_LIST = ["mental_math_blitz", "multiple_match", "spot_the_red_flag"];
 
   async function loadStreakAndBests() {
     let dates = JSON.parse(localStorage.getItem(LOCAL_DATES_KEY) || "[]");
@@ -362,13 +398,15 @@
   function pick(arr) { return arr[randInt(0, arr.length - 1)]; }
 
   function showScreen(id) {
-    ["menu-screen", "play-screen", "play-screen-mm", "end-screen"].forEach(s => {
+    ["menu-screen", "play-screen", "play-screen-mm", "play-screen-srf", "end-screen"].forEach(s => {
       document.getElementById(s).style.display = s === id ? "block" : "none";
     });
     if (id === "menu-screen") loadStreakAndBests();
   }
 
   document.getElementById("done-btn").addEventListener("click", () => showScreen("menu-screen"));
+  function pulse(el) { el.classList.add("pulse"); setTimeout(() => el.classList.remove("pulse"), 220); }
+  function flashStage(el, kind) { el.classList.add(kind); setTimeout(() => el.classList.remove(kind), 400); }
 
   // =====================================================================
   // GAME 1 — Mental Math Blitz
@@ -425,7 +463,9 @@
   document.querySelector('[data-game="mental_math_blitz"]').addEventListener("click", startMMB);
   document.getElementById("back-btn").addEventListener("click", () => showScreen("menu-screen"));
   document.getElementById("play-again-btn").addEventListener("click", () => {
-    if (currentGame === "mental_math_blitz") startMMB(); else startMM();
+    if (currentGame === "mental_math_blitz") startMMB();
+    else if (currentGame === "multiple_match") startMM();
+    else startSRF();
   });
 
   let currentGame = null;
@@ -464,9 +504,6 @@
     qText.textContent = q.text;
     answerInput.value = ""; answerInput.focus();
   }
-
-  function pulse(el) { el.classList.add("pulse"); setTimeout(() => el.classList.remove("pulse"), 220); }
-  function flashStage(el, kind) { el.classList.add(kind); setTimeout(() => el.classList.remove(kind), 260); }
 
   function mmbSubmit() {
     if (!mmbRunning) return;
@@ -593,7 +630,7 @@
     mmQTimerBar.style.transition = "none";
     mmQTimerBar.style.width = "100%";
     mmQTimerBar.classList.remove("low");
-    void mmQTimerBar.offsetWidth; // force reflow so the transition below actually restarts
+    void mmQTimerBar.offsetWidth;
     mmQTimerBar.style.transition = `width ${MM_Q_TIME_MS}ms linear`;
     mmQTimerBar.style.width = "0%";
     setTimeout(() => mmQTimerBar.classList.add("low"), MM_Q_TIME_MS * 0.6);
@@ -635,6 +672,173 @@
     clearInterval(mmSessionInterval);
     clearTimeout(mmQTimeout);
     finishGame("multiple_match", mmScore, "Multiple Match");
+  }
+
+  // =====================================================================
+  // GAME 3 — Spot the Red Flag
+  // =====================================================================
+  function fmtMoney(v) {
+    const sign = v < 0 ? "-" : "";
+    return `${sign}$${Math.abs(v)}m`;
+  }
+
+  function generateStatement() {
+    const type = pick(["income", "balance"]);
+    let lines, subtotalCandidates, signFlipCandidates;
+
+    if (type === "income") {
+      const revenue = randInt(5, 50) * 10;
+      const cogs = Math.round(revenue * (randInt(40, 70) / 100));
+      const grossProfit = revenue - cogs;
+      const opex = Math.round(grossProfit * (randInt(30, 60) / 100));
+      const operatingProfit = grossProfit - opex;
+      lines = [
+        { label: "Revenue", value: revenue },
+        { label: "COGS", value: cogs },
+        { label: "Gross Profit", value: grossProfit },
+        { label: "Operating Expenses", value: opex },
+        { label: "Operating Profit", value: operatingProfit },
+      ];
+      subtotalCandidates = [2, 4];
+      signFlipCandidates = [1, 3];
+    } else {
+      const assets = randInt(20, 200) * 10;
+      const liabilities = Math.round(assets * (randInt(30, 60) / 100));
+      const equity = assets - liabilities;
+      lines = [
+        { label: "Total Assets", value: assets },
+        { label: "Total Liabilities", value: liabilities },
+        { label: "Total Equity", value: equity },
+      ];
+      subtotalCandidates = [1, 2];
+      signFlipCandidates = [1];
+    }
+
+    const anomalyType = pick(["subtotal_break", "sign_flip"]);
+    const candidates = anomalyType === "subtotal_break" ? subtotalCandidates : signFlipCandidates;
+    const anomalyIndex = pick(candidates);
+
+    if (anomalyType === "subtotal_break") {
+      const trueVal = lines[anomalyIndex].value;
+      const offsetPct = randInt(15, 40) / 100;
+      const direction = Math.random() < 0.5 ? 1 : -1;
+      let newVal = Math.round(trueVal * (1 + direction * offsetPct));
+      if (Math.abs(newVal - trueVal) < 5) newVal = trueVal + direction * 8;
+      lines[anomalyIndex].value = newVal;
+    } else {
+      lines[anomalyIndex].value = -Math.abs(lines[anomalyIndex].value);
+    }
+
+    return { type: type === "income" ? "Income Statement" : "Balance Sheet", lines, anomalyIndex };
+  }
+
+  const SRF_TOTAL_TIME = 60;
+  const SRF_ROUND_TIME_MS = 6000;
+  let srfTimeLeft = SRF_TOTAL_TIME, srfScore = 0, srfCurrent = null, srfInterval = null, srfRoundTimeout = null, srfRunning = false, srfLocked = false;
+
+  const srfScoreEl = document.getElementById("srf-score");
+  const srfTimeEl = document.getElementById("srf-time");
+  const srfBestEl = document.getElementById("srf-best");
+  const srfRing = document.getElementById("srf-ring-fill");
+  const srfQTimerBar = document.getElementById("srf-qtimer");
+  const srfQSub = document.getElementById("srf-q-sub");
+  const srfList = document.getElementById("srf-stmt-list");
+  const srfStage = document.getElementById("srf-question-stage");
+  srfRing.style.strokeDasharray = String(RING_CIRC);
+
+  document.querySelector('[data-game="spot_the_red_flag"]').addEventListener("click", startSRF);
+  document.getElementById("back-btn-srf").addEventListener("click", () => { clearTimeout(srfRoundTimeout); clearInterval(srfInterval); showScreen("menu-screen"); });
+
+  function startSRF() {
+    currentGame = "spot_the_red_flag";
+    srfScore = 0; srfTimeLeft = SRF_TOTAL_TIME; srfRunning = true; srfLocked = false;
+    srfScoreEl.textContent = "0";
+    srfTimeEl.textContent = String(SRF_TOTAL_TIME);
+    srfRing.style.strokeDashoffset = "0";
+    srfRing.classList.remove("low");
+    const localBest = parseInt(localStorage.getItem(localBestKey("spot_the_red_flag")) || "0", 10);
+    srfBestEl.textContent = localBest > 0 ? String(localBest) : "—";
+    showScreen("play-screen-srf");
+    srfNextRound();
+
+    clearInterval(srfInterval);
+    srfInterval = setInterval(() => {
+      srfTimeLeft -= 1;
+      srfUpdateSessionTimer();
+      if (srfTimeLeft <= 0) srfEnd();
+    }, 1000);
+  }
+
+  function srfUpdateSessionTimer() {
+    const t = Math.max(0, srfTimeLeft);
+    srfTimeEl.textContent = String(t);
+    srfRing.style.strokeDashoffset = String(RING_CIRC * (1 - t / SRF_TOTAL_TIME));
+    srfRing.classList.toggle("low", t <= 10);
+  }
+
+  function srfNextRound() {
+    if (!srfRunning) return;
+    srfLocked = false;
+    srfCurrent = generateStatement();
+    srfQSub.textContent = srfCurrent.type;
+
+    srfList.innerHTML = "";
+    srfCurrent.lines.forEach((line, i) => {
+      const row = document.createElement("div");
+      row.className = "stmt-row";
+      row.innerHTML = `<span class="stmt-label">${line.label}</span><span class="stmt-value">${fmtMoney(line.value)}</span>`;
+      row.addEventListener("click", () => srfAnswer(i));
+      srfList.appendChild(row);
+    });
+
+    srfQTimerBar.style.transition = "none";
+    srfQTimerBar.style.width = "100%";
+    srfQTimerBar.classList.remove("low");
+    void srfQTimerBar.offsetWidth;
+    srfQTimerBar.style.transition = `width ${SRF_ROUND_TIME_MS}ms linear`;
+    srfQTimerBar.style.width = "0%";
+    setTimeout(() => srfQTimerBar.classList.add("low"), SRF_ROUND_TIME_MS * 0.6);
+
+    clearTimeout(srfRoundTimeout);
+    srfRoundTimeout = setTimeout(() => srfAnswer(null), SRF_ROUND_TIME_MS);
+  }
+
+  function srfAnswer(chosenIndex) {
+    if (!srfRunning || srfLocked) return;
+    srfLocked = true;
+    clearTimeout(srfRoundTimeout);
+    const rows = srfList.querySelectorAll(".stmt-row");
+    const correct = chosenIndex === srfCurrent.anomalyIndex;
+
+    if (chosenIndex !== null && rows[chosenIndex]) {
+      rows[chosenIndex].classList.add(correct ? "correct-flag" : "wrong-flag");
+    }
+    if (!correct && rows[srfCurrent.anomalyIndex]) {
+      rows[srfCurrent.anomalyIndex].classList.add("correct-flag");
+    }
+
+    if (correct) {
+      srfScore += 1;
+      srfScoreEl.textContent = String(srfScore);
+      pulse(srfScoreEl);
+      flashStage(srfStage, "flash-correct");
+    } else {
+      srfTimeLeft = Math.max(0, srfTimeLeft - 3);
+      srfUpdateSessionTimer();
+      flashStage(srfStage, "flash-wrong");
+    }
+
+    setTimeout(() => {
+      if (srfTimeLeft <= 0) { srfEnd(); return; }
+      srfNextRound();
+    }, 700);
+  }
+
+  async function srfEnd() {
+    srfRunning = false;
+    clearInterval(srfInterval);
+    clearTimeout(srfRoundTimeout);
+    finishGame("spot_the_red_flag", srfScore, "Spot the Red Flag");
   }
 
   // =====================================================================
