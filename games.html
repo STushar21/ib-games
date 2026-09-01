@@ -4,172 +4,202 @@
 <meta charset="UTF-8">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Games — Internship Tracker</title>
+<title>Reps — Daily Practice</title>
 <style>
+  :root {
+    --bg: #FAF9F6;
+    --surface: #FFFFFF;
+    --ink: #1B1B2F;
+    --ink-soft: #5B5B72;
+    --ink-faint: #9C9CAE;
+    --border: #EAE7F5;
+    --brand: #6D4AFF;
+    --brand-dark: #5636D6;
+    --brand-soft: #EFEAFF;
+    --amber: #FFA826;
+    --amber-soft: #FFF3DF;
+    --green: #17A673;
+    --green-soft: #E3F8EE;
+    --red: #FF5A5A;
+    --red-soft: #FFEDED;
+  }
   * { box-sizing: border-box; }
   body {
-    background: #F5F4EF;
-    color: #16233F;
+    background: var(--bg);
+    color: var(--ink);
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    max-width: min(960px, 94vw);
-    margin: 40px auto;
+    max-width: min(980px, 94vw);
+    margin: 32px auto 60px;
     padding: 0 16px;
   }
-  h1 { font-size: 28px; margin-bottom: 4px; font-family: 'Source Serif 4', Georgia, serif; }
-  .sub { color: #5B6472; font-size: 13px; margin-bottom: 24px; }
+  h1 { font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 30px; margin: 0 0 4px; letter-spacing: -0.02em; }
+  .sub { color: var(--ink-soft); font-size: 13.5px; margin-bottom: 22px; }
 
-  /* --- nav (identical pattern to other pages) --- */
+  /* --- nav --- */
   .top-nav {
     position: sticky; top: 16px; z-index: 100;
-    display: flex; align-items: center; gap: 4px; width: fit-content;
-    background: #FFFFFF; border: 1px solid #D8DADD; border-radius: 10px;
-    padding: 5px; margin: 0 auto 28px;
-    box-shadow: 0 2px 12px rgba(15,23,42,0.08);
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 8px 8px 8px 6px; margin: 0 0 26px;
+    box-shadow: 0 4px 20px rgba(109,74,255,0.08);
   }
+  .top-nav .nav-left { display: flex; align-items: center; gap: 2px; }
   .top-nav .brand {
-    font-family: 'Source Serif 4', Georgia, serif; font-weight: 700; font-size: 14px;
-    color: #8C6A28; padding: 8px 14px 8px 12px; margin-right: 4px;
-    border-right: 1px solid #D8DADD; text-decoration: none; letter-spacing: 0.03em;
+    font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 15px;
+    color: var(--brand); padding: 8px 14px; text-decoration: none; letter-spacing: 0.02em;
   }
-  .top-nav a.nav-link { padding: 8px 16px; border-radius: 7px; font-size: 13px; font-weight: 600; color: #5B6472; text-decoration: none; }
-  .top-nav a.nav-link.active { background: #B08D57; color: #16233F; }
-  .nav-dropdown { position: relative; display: flex; align-items: center; }
-  .nav-caret { background: none; border: none; color: #8A8F99; cursor: pointer; font-size: 10px; padding: 8px 10px 8px 2px; margin-right: -6px; }
-  .nav-dropdown-menu { display: none; position: absolute; top: 120%; left: 0; background: #FFFFFF; border: 1px solid #D8DADD; border-radius: 8px; box-shadow: 0 4px 16px rgba(15,23,42,0.1); padding: 6px; min-width: 190px; z-index: 200; }
-  .nav-dropdown-menu.open { display: block; }
-  .nav-dropdown-menu a { display: block; padding: 8px 10px; border-radius: 6px; font-size: 13px; font-weight: 500; color: #16233F; text-decoration: none; }
-  .nav-dropdown-menu a:hover { background: #F6F6F3; }
-  .nav-dropdown-menu a.active { color: #8C6A28; font-weight: 600; }
+  .top-nav a.nav-link { padding: 9px 16px; border-radius: 10px; font-size: 13.5px; font-weight: 700; color: var(--ink-soft); text-decoration: none; }
+  .top-nav a.nav-link.active { background: var(--brand); color: #fff; }
+  .top-nav a.nav-link.soon { color: var(--ink-faint); }
+  .top-nav a.tracker-link { font-size: 12px; font-weight: 600; color: var(--ink-faint); text-decoration: none; padding: 8px 12px; }
 
   .logout-bar { display: flex; justify-content: flex-end; margin-bottom: 12px; }
-  #logout-btn { background: none; border: 1px solid #D8DADD; color: #5B6472; font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 6px; cursor: pointer; }
+  #logout-btn { background: none; border: 1px solid var(--border); color: var(--ink-soft); font-size: 12px; font-weight: 700; padding: 7px 14px; border-radius: 8px; cursor: pointer; }
 
-  /* --- login gate (identical pattern) --- */
-  #login-gate { max-width: 360px; margin: 60px auto; }
-  #login-gate h2 { font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; margin-bottom: 4px; text-align: center; }
-  #login-gate .sub { text-align: center; margin-bottom: 20px; }
+  /* --- login gate --- */
+  #login-gate { max-width: 380px; margin: 70px auto; text-align: center; }
+  #login-gate .mark { font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 22px; color: var(--brand); margin-bottom: 10px; }
+  #login-gate h2 { font-family: 'Manrope', sans-serif; font-size: 20px; margin-bottom: 6px; }
+  #login-gate .sub { margin-bottom: 0; }
+  #login-gate a { color: var(--brand-dark); font-weight: 600; }
+
+  /* --- streak hero --- */
+  .streak-hero {
+    display: flex; align-items: center; gap: 16px;
+    background: linear-gradient(135deg, var(--brand-soft), #FFF6E9);
+    border: 1px solid var(--border); border-radius: 18px;
+    padding: 18px 22px; margin-bottom: 22px;
+  }
+  .streak-hero .flame { font-size: 30px; animation: flicker 1.6s ease-in-out infinite; }
+  @keyframes flicker { 0%,100% { transform: scale(1) rotate(0deg); } 50% { transform: scale(1.12) rotate(-3deg); } }
+  .streak-hero .num { font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 22px; color: var(--brand-dark); }
+  .streak-hero .label { font-size: 12.5px; color: var(--ink-soft); }
 
   /* --- game grid --- */
-  .game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-bottom: 28px; }
+  .game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; margin-bottom: 28px; }
   .game-card {
-    background: #FFFFFF; border: 1px solid #E8E9EA; border-radius: 12px;
-    padding: 16px; cursor: pointer; transition: transform 0.12s ease, box-shadow 0.12s ease;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 18px;
+    padding: 18px; cursor: pointer; transition: transform 0.14s ease, box-shadow 0.14s ease;
+    border-top: 4px solid var(--accent, var(--brand));
   }
-  .game-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(15,23,42,0.08); }
-  .game-card.locked { cursor: default; opacity: 0.55; }
+  .game-card:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(27,27,47,0.1); }
+  .game-card.locked { cursor: default; opacity: 0.5; }
   .game-card.locked:hover { transform: none; box-shadow: none; }
-  .game-card .g-name { font-weight: 600; font-size: 14.5px; margin-bottom: 4px; }
-  .game-card .g-desc { font-size: 12px; color: #5B6472; line-height: 1.4; margin-bottom: 8px; }
-  .game-card .g-tag { font-size: 10.5px; color: #8C6A28; background: #F6EFDE; padding: 2px 8px; border-radius: 20px; display: inline-block; }
-  .game-card .g-best { font-size: 11px; color: #8A8F99; margin-top: 8px; }
-
-  /* --- streak strip --- */
-  .streak-strip {
-    display: flex; align-items: center; gap: 14px;
-    background: #FFFFFF; border: 1px solid #D8DADD; border-radius: 10px;
-    padding: 12px 16px; margin-bottom: 20px; font-size: 13px;
-  }
-  .streak-strip .flame { font-size: 18px; }
-  .streak-strip b { color: #8C6A28; }
+  .game-card .g-icon { font-size: 22px; margin-bottom: 8px; display: block; }
+  .game-card .g-name { font-family: 'Manrope', sans-serif; font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+  .game-card .g-desc { font-size: 12px; color: var(--ink-soft); line-height: 1.45; margin-bottom: 10px; }
+  .game-card .g-tag { font-size: 10.5px; font-weight: 700; color: var(--accent, var(--brand-dark)); background: var(--accent-soft, var(--brand-soft)); padding: 3px 9px; border-radius: 20px; display: inline-block; }
+  .game-card .g-best { font-size: 11px; color: var(--ink-faint); margin-top: 9px; font-weight: 600; }
 
   /* --- play screen --- */
   #play-screen { display: none; }
-  .play-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
-  .play-back { background: none; border: 1px solid #D8DADD; color: #5B6472; font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 6px; cursor: pointer; }
-  .hud { display: flex; gap: 24px; margin-bottom: 22px; }
-  .hud-item { flex: 1; background: #FFFFFF; border: 1px solid #E8E9EA; border-radius: 10px; padding: 14px 18px; text-align: center; }
-  .hud-item .label { font-size: 10.5px; color: #8A8F99; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
-  .hud-item .value { font-family: 'Source Serif 4', Georgia, serif; font-size: 26px; font-weight: 700; transition: transform 0.15s ease; }
-  .hud-item .value.pulse { transform: scale(1.18); color: #1F7A4C; }
-  .timer-bar-track { width: 100%; height: 6px; background: #E8E9EA; border-radius: 6px; overflow: hidden; margin-bottom: 28px; }
-  .timer-bar-fill { height: 100%; background: #B08D57; width: 100%; transition: width 1s linear, background 0.2s ease; }
-  .timer-bar-fill.low { background: #B14432; }
+  .play-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .play-back { background: none; border: 1px solid var(--border); color: var(--ink-soft); font-size: 12.5px; font-weight: 700; padding: 7px 14px; border-radius: 8px; cursor: pointer; }
+
+  .hud-row { display: flex; align-items: center; gap: 28px; justify-content: center; margin-bottom: 28px; flex-wrap: wrap; }
+  .timer-ring { position: relative; width: 116px; height: 116px; }
+  .timer-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .timer-ring circle { fill: none; stroke-width: 9; }
+  .ring-bg { stroke: var(--border); }
+  .ring-fill { stroke: var(--brand); stroke-linecap: round; transition: stroke-dashoffset 1s linear, stroke 0.2s ease; }
+  .ring-fill.low { stroke: var(--red); }
+  .ring-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 30px; }
+
+  .stat-chip { text-align: center; }
+  .stat-chip .label { font-size: 10.5px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; margin-bottom: 4px; }
+  .stat-chip .value { font-family: 'Manrope', sans-serif; font-size: 30px; font-weight: 800; transition: transform 0.16s ease; }
+  .stat-chip .value.pulse { transform: scale(1.22); color: var(--green); }
+  .stat-chip .value.best { color: var(--ink-soft); font-size: 22px; }
 
   .question-stage {
-    background: #FFFFFF; border: 1px solid #E8E9EA; border-radius: 14px;
-    padding: 44px 24px; text-align: center; margin-bottom: 18px;
-    transition: background 0.15s ease;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 22px;
+    padding: 48px 24px; text-align: center; margin-bottom: 18px;
+    transition: background 0.15s ease, transform 0.1s ease;
   }
-  .question-stage.flash-correct { background: #E4F3EA; }
-  .question-stage.flash-wrong { background: #FBEEE6; }
-  .q-text { font-family: 'Source Serif 4', Georgia, serif; font-size: 26px; font-weight: 600; margin-bottom: 22px; }
+  .question-stage.flash-correct { background: var(--green-soft); }
+  .question-stage.flash-wrong { background: var(--red-soft); transform: translateX(0); animation: shake 0.26s ease; }
+  @keyframes shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+  .q-text { font-family: 'Manrope', sans-serif; font-size: 28px; font-weight: 800; margin-bottom: 24px; }
   .answer-row { display: flex; gap: 10px; justify-content: center; }
   #answer-input {
-    background: #F6F6F3; border: 1px solid #D8DADD; border-radius: 8px;
-    padding: 12px 16px; font-size: 18px; font-family: inherit; width: 160px; text-align: center;
+    background: var(--bg); border: 2px solid var(--border); border-radius: 12px;
+    padding: 13px 16px; font-size: 19px; font-family: 'Manrope', sans-serif; font-weight: 700; width: 170px; text-align: center;
   }
-  #answer-input:focus { outline: none; border-color: #B08D57; }
+  #answer-input:focus { outline: none; border-color: var(--brand); }
   .answer-row button {
-    background: #B08D57; border: none; border-radius: 8px; padding: 12px 20px;
-    font-weight: 600; cursor: pointer; font-size: 14px;
+    background: var(--brand); color: #fff; border: none; border-radius: 12px; padding: 13px 22px;
+    font-weight: 700; cursor: pointer; font-size: 14px; font-family: 'Manrope', sans-serif;
   }
+  .answer-row button:active { background: var(--brand-dark); }
 
   /* --- end screen --- */
-  #end-screen { display: none; text-align: center; padding: 40px 20px; }
-  #end-screen .final-score { font-family: 'Source Serif 4', Georgia, serif; font-size: 48px; font-weight: 700; margin: 6px 0; }
-  #end-screen .best-line { font-size: 13px; color: #5B6472; margin-bottom: 24px; }
-  #end-screen .best-line.new-best { color: #1F7A4C; font-weight: 600; }
-  #end-screen button { background: #B08D57; border: none; border-radius: 8px; padding: 12px 22px; font-weight: 600; cursor: pointer; font-size: 14px; margin: 0 6px; }
-  #end-screen button.secondary { background: #EFEEE9; }
+  #end-screen { display: none; text-align: center; padding: 44px 20px; }
+  #end-screen .final-score { font-family: 'Manrope', sans-serif; font-size: 56px; font-weight: 800; margin: 8px 0; color: var(--brand-dark); }
+  #end-screen .best-line { font-size: 13.5px; color: var(--ink-soft); margin-bottom: 26px; font-weight: 600; }
+  #end-screen .best-line.new-best { color: var(--green); }
+  #end-screen button { border: none; border-radius: 12px; padding: 13px 24px; font-weight: 700; cursor: pointer; font-size: 14px; margin: 0 6px; font-family: 'Manrope', sans-serif; }
+  #end-screen button.primary { background: var(--brand); color: #fff; }
+  #end-screen button.secondary { background: var(--brand-soft); color: var(--brand-dark); }
 </style>
 </head>
 <body>
 
 <nav class="top-nav">
-  <a href="index.html" class="brand">STK</a>
-  <a href="tracker.html" class="nav-link">Tracker</a>
-  <a href="outreach.html" class="nav-link">Outreach</a>
-  <a href="questions.html" class="nav-link">Questions</a>
-  <a href="practice.html" class="nav-link">OA Prep</a>
-  <a href="games.html" class="nav-link active">Games</a>
-  <div class="nav-dropdown">
-    <a href="resources.html" class="nav-link">Resources</a>
-    <button class="nav-caret" type="button" aria-label="Resources menu">&#9662;</button>
-    <div class="nav-dropdown-menu">
-      <a href="resources.html">Areas of Finance</a>
-      <a href="resources-cheatsheets.html">Cheat Sheets</a>
-      <a href="resources-calendar.html">Recruitment Calendar</a>
-    </div>
+  <div class="nav-left">
+    <a href="games.html" class="brand">⚡ REPS</a>
+    <a href="games.html" class="nav-link active">Games</a>
+    <a href="#" class="nav-link soon">News Brief</a>
   </div>
-  <a href="advice.html" class="nav-link">Advice</a>
+  <a href="https://stushar21.github.io/Internship-Tracker/" class="tracker-link">Tracker ↗</a>
 </nav>
 
 <div id="login-gate">
+  <div class="mark">⚡ REPS</div>
   <h2>Locked</h2>
-  <div class="sub">Games hold your scores. <a href="index.html" style="color:#8C6A28;">Sign in from the home page</a>, then come back.</div>
+  <div class="sub">Sign in to track your scores and streak.</div>
+  <div style="margin-top:22px; max-width:260px; margin-left:auto; margin-right:auto;">
+    <input type="email" id="login-email" placeholder="Email" style="width:100%; margin-bottom:8px; background:#fff; border:1px solid var(--border); border-radius:10px; padding:11px 12px; font-size:14px; font-family:inherit;">
+    <input type="password" id="login-password" placeholder="Password" style="width:100%; margin-bottom:10px; background:#fff; border:1px solid var(--border); border-radius:10px; padding:11px 12px; font-size:14px; font-family:inherit;">
+    <button type="button" id="login-btn" style="width:100%; background:var(--brand); color:#fff; border:none; border-radius:10px; padding:12px; font-weight:700; cursor:pointer; font-family:'Manrope',sans-serif;">Sign in</button>
+    <div id="login-error" style="display:none; color:var(--red); font-size:12.5px; margin-top:8px;"></div>
+  </div>
 </div>
 
 <div id="app-content" style="display:none;">
 <div class="logout-bar"><button id="logout-btn" type="button">Sign out</button></div>
 
 <div id="menu-screen">
-  <h1>Games</h1>
+  <h1>Your daily reps</h1>
   <div class="sub">Pick a couple — 2 to 5 minutes a day is the point, not a long session.</div>
 
-  <div class="streak-strip">
+  <div class="streak-hero">
     <span class="flame">🔥</span>
-    <span>Current streak: <b id="streak-count">0</b> day<span id="streak-plural">s</span></span>
+    <div>
+      <div class="num"><span id="streak-count">0</span> day<span id="streak-plural">s</span></div>
+      <div class="label">current streak</div>
+    </div>
   </div>
 
   <div class="game-grid">
-    <div class="game-card" data-game="mental_math_blitz">
+    <div class="game-card" data-game="mental_math_blitz" style="--accent:#6D4AFF; --accent-soft:#EFEAFF;">
+      <span class="g-icon">⚡</span>
       <div class="g-name">Mental Math Blitz</div>
       <div class="g-desc">60 seconds of percentages, margins, and quick multiplication. Never the same question twice.</div>
       <span class="g-tag">Reflex · 60s</span>
       <div class="g-best" id="best-mental_math_blitz">Best: —</div>
     </div>
 
-    <div class="game-card locked"><div class="g-name">Multiple Match</div><div class="g-desc">High or low, before the clock runs out.</div><span class="g-tag">Coming soon</span></div>
-    <div class="game-card locked"><div class="g-name">Spot the Red Flag</div><div class="g-desc">Something's off in these numbers — find it fast.</div><span class="g-tag">Coming soon</span></div>
-    <div class="game-card locked"><div class="g-name">Statement Sprint</div><div class="g-desc">Sort each line before the next one lands.</div><span class="g-tag">Coming soon</span></div>
-    <div class="game-card locked"><div class="g-name">Deal Chain</div><div class="g-desc">Trace the deal process without crossing your own path.</div><span class="g-tag">Coming soon</span></div>
-    <div class="game-card locked"><div class="g-name">Comp Grid</div><div class="g-desc">Place companies so every row and column checks out.</div><span class="g-tag">Coming soon</span></div>
-    <div class="game-card locked"><div class="g-name">Ratio Ladder</div><div class="g-desc">One input at a time, climb to the target ratio.</div><span class="g-tag">Coming soon</span></div>
-    <div class="game-card locked"><div class="g-name">Sector Pinpoint</div><div class="g-desc">Guess the company from as few clues as possible.</div><span class="g-tag">Coming soon</span></div>
+    <div class="game-card locked" style="--accent:#17A673; --accent-soft:#E3F8EE;"><span class="g-icon">📈</span><div class="g-name">Multiple Match</div><div class="g-desc">High or low, before the clock runs out.</div><span class="g-tag">Coming soon</span></div>
+    <div class="game-card locked" style="--accent:#FF5A5A; --accent-soft:#FFEDED;"><span class="g-icon">🚩</span><div class="g-name">Spot the Red Flag</div><div class="g-desc">Something's off in these numbers — find it fast.</div><span class="g-tag">Coming soon</span></div>
+    <div class="game-card locked" style="--accent:#FFA826; --accent-soft:#FFF3DF;"><span class="g-icon">📋</span><div class="g-name">Statement Sprint</div><div class="g-desc">Sort each line before the next one lands.</div><span class="g-tag">Coming soon</span></div>
+    <div class="game-card locked" style="--accent:#6D4AFF; --accent-soft:#EFEAFF;"><span class="g-icon">🔗</span><div class="g-name">Deal Chain</div><div class="g-desc">Trace the deal process without crossing your own path.</div><span class="g-tag">Coming soon</span></div>
+    <div class="game-card locked" style="--accent:#17A673; --accent-soft:#E3F8EE;"><span class="g-icon">🧩</span><div class="g-name">Comp Grid</div><div class="g-desc">Place companies so every row and column checks out.</div><span class="g-tag">Coming soon</span></div>
+    <div class="game-card locked" style="--accent:#FFA826; --accent-soft:#FFF3DF;"><span class="g-icon">🪜</span><div class="g-name">Ratio Ladder</div><div class="g-desc">One input at a time, climb to the target ratio.</div><span class="g-tag">Coming soon</span></div>
+    <div class="game-card locked" style="--accent:#FF5A5A; --accent-soft:#FFEDED;"><span class="g-icon">🔍</span><div class="g-name">Sector Pinpoint</div><div class="g-desc">Guess the company from as few clues as possible.</div><span class="g-tag">Coming soon</span></div>
   </div>
 </div>
 
@@ -178,13 +208,17 @@
     <button class="play-back" id="back-btn" type="button">&larr; Back to games</button>
   </div>
 
-  <div class="hud">
-    <div class="hud-item"><div class="label">Time</div><div class="value" id="hud-time">60</div></div>
-    <div class="hud-item"><div class="label">Score</div><div class="value" id="hud-score">0</div></div>
-    <div class="hud-item"><div class="label">Best</div><div class="value" id="hud-best" style="font-size:20px;">—</div></div>
+  <div class="hud-row">
+    <div class="stat-chip"><div class="label">Score</div><div class="value" id="hud-score">0</div></div>
+    <div class="timer-ring">
+      <svg viewBox="0 0 120 120">
+        <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
+        <circle class="ring-fill" id="ring-fill" cx="60" cy="60" r="52"></circle>
+      </svg>
+      <div class="ring-label" id="hud-time">60</div>
+    </div>
+    <div class="stat-chip"><div class="label">Best</div><div class="value best" id="hud-best">—</div></div>
   </div>
-
-  <div class="timer-bar-track"><div class="timer-bar-fill" id="timer-bar"></div></div>
 
   <div class="question-stage" id="question-stage">
     <div class="q-text" id="q-text">Ready?</div>
@@ -199,7 +233,7 @@
   <div class="sub">Mental Math Blitz</div>
   <div class="final-score" id="final-score">0</div>
   <div class="best-line" id="best-line">Best: 0</div>
-  <button type="button" id="play-again-btn">Play again</button>
+  <button type="button" class="primary" id="play-again-btn">Play again</button>
   <button type="button" class="secondary" id="done-btn">Back to games</button>
 </div>
 
@@ -211,42 +245,41 @@
   const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inprd3JxZHB1bWZmd3JrZWRoa2NoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyNTE1MzUsImV4cCI6MjEwMzgyNzUzNX0.x4FT30VdOp1dvQ67citcjn3Cfm2ZD3JwVNuKFmKXr0w";
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  // --- Auth gate (identical pattern to tracker.html) ---
+  // --- Auth gate: this project has no public sign-up, so the login gate
+  // itself needs an email/password form (the tracker's gate could just
+  // link to a shared home-page login — this site doesn't have one yet).
   sb.auth.onAuthStateChange((event, session) => {
     document.getElementById("login-gate").style.display = session ? "none" : "block";
     document.getElementById("app-content").style.display = session ? "block" : "none";
-    if (session) {
-      loadStreakAndBests();
+    if (session) loadStreakAndBests();
+  });
+
+  document.getElementById("login-btn").addEventListener("click", async () => {
+    const email = document.getElementById("login-email").value.trim();
+    const password = document.getElementById("login-password").value;
+    const errEl = document.getElementById("login-error");
+    errEl.style.display = "none";
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) {
+      errEl.textContent = error.message;
+      errEl.style.display = "block";
     }
   });
+  document.getElementById("login-password").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") document.getElementById("login-btn").click();
+  });
+
   document.getElementById("logout-btn").addEventListener("click", async () => {
     await sb.auth.signOut();
-    window.location.href = "index.html";
-  });
-
-  document.querySelectorAll('.nav-caret').forEach(function (btn) {
-    btn.addEventListener('click', function (e) {
-      e.stopPropagation();
-      var menu = btn.nextElementSibling;
-      document.querySelectorAll('.nav-dropdown-menu.open').forEach(function (m) { if (m !== menu) m.classList.remove('open'); });
-      menu.classList.toggle('open');
-    });
-  });
-  document.addEventListener('click', function () {
-    document.querySelectorAll('.nav-dropdown-menu.open').forEach(function (m) { m.classList.remove('open'); });
   });
 
   // =====================================================================
-  // Score persistence — tries Supabase's game_scores table first (once it
-  // exists), and always keeps a localStorage mirror so "Best" still shows
-  // instantly and works even before the table is created / if a save fails.
+  // Score persistence
   // =====================================================================
   const LOCAL_BEST_KEY = "gs_best_mental_math_blitz";
-  const LOCAL_DATES_KEY = "gs_played_dates"; // JSON array of "YYYY-MM-DD" strings, for the streak
+  const LOCAL_DATES_KEY = "gs_played_dates";
 
-  function todayStr() {
-    return new Date().toISOString().slice(0, 10);
-  }
+  function todayStr() { return new Date().toISOString().slice(0, 10); }
 
   function recordLocalPlayDate() {
     const dates = JSON.parse(localStorage.getItem(LOCAL_DATES_KEY) || "[]");
@@ -259,8 +292,6 @@
     const set = new Set(dateStrings);
     let streak = 0;
     let cursor = new Date();
-    // Today counts if played; otherwise the streak is measured up to yesterday
-    // so a day not yet played (but not missed) doesn't zero it out mid-day.
     if (!set.has(todayStr())) cursor.setDate(cursor.getDate() - 1);
     while (set.has(cursor.toISOString().slice(0, 10))) {
       streak++;
@@ -270,17 +301,13 @@
   }
 
   async function loadStreakAndBests() {
-    // Try Supabase first; table may not exist yet, so fail quietly to localStorage.
     let dates = JSON.parse(localStorage.getItem(LOCAL_DATES_KEY) || "[]");
     let bestFromDb = null;
     try {
       const { data: userData } = await sb.auth.getUser();
       const userId = userData?.user?.id;
       if (userId) {
-        const { data, error } = await sb
-          .from("game_scores")
-          .select("game, score, played_date")
-          .eq("user_id", userId);
+        const { data, error } = await sb.from("game_scores").select("game, score, played_date").eq("user_id", userId);
         if (!error && data) {
           dates = [...new Set(data.map(r => r.played_date))];
           const mmbScores = data.filter(r => r.game === "mental_math_blitz").map(r => r.score);
@@ -310,9 +337,7 @@
       const { data: userData } = await sb.auth.getUser();
       const userId = userData?.user?.id;
       if (!userId) return;
-      const { error } = await sb.from("game_scores").insert([{
-        user_id: userId, game, score, played_date: todayStr()
-      }]);
+      const { error } = await sb.from("game_scores").insert([{ user_id: userId, game, score, played_date: todayStr() }]);
       if (error) console.warn("Couldn't save score to Supabase (table may not exist yet):", error.message);
     } catch (e) {
       console.warn("Couldn't save score to Supabase:", e);
@@ -320,58 +345,43 @@
   }
 
   // =====================================================================
-  // Mental Math Blitz — question generator
-  // Every question is generated fresh from templates + random values, so
-  // nothing is ever pulled from a fixed bank. Consecutive duplicate
-  // question text is rejected and re-rolled.
+  // Mental Math Blitz — question generator (unchanged logic)
   // =====================================================================
   const NICE_PERCENTAGES = [5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90];
-
   function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
   function pick(arr) { return arr[randInt(0, arr.length - 1)]; }
 
   function genPercentage() {
     const p = pick(NICE_PERCENTAGES);
-    // Choose a base so p% of it lands on a whole number: base must be a
-    // multiple of 100/gcd(p,100).
     function gcd(a, b) { return b === 0 ? a : gcd(b, a % b); }
     const step = 100 / gcd(p, 100);
     const base = step * randInt(2, Math.floor(400 / step));
     const answer = Math.round((base * p) / 100);
     return { text: `${p}% of ${base}?`, answer };
   }
-
   function genMultiplication() {
     const easy = Math.random() < 0.5;
     const a = easy ? randInt(6, 19) : randInt(12, 29);
     const b = easy ? randInt(6, 19) : randInt(6, 19);
     return { text: `${a} × ${b}?`, answer: a * b };
   }
-
   function genMargin() {
-    const revenue = randInt(2, 40) * 10; // e.g. 20, 30, ..., 400 ($m)
+    const revenue = randInt(2, 40) * 10;
     const margin = pick([10,12,15,18,20,22,25,28,30,32,35,40]);
     const answer = Math.round((revenue * margin) / 100);
     return { text: `Revenue $${revenue}m, margin ${margin}% → profit ($m)?`, answer };
   }
-
   function genGrowth() {
-    const base = randInt(4, 40) * 10; // $m
+    const base = randInt(4, 40) * 10;
     const growth = pick([5,10,15,20,25,30,-5,-10,-15]);
     const answer = Math.round(base * (1 + growth / 100));
     return { text: `$${base}m growing ${growth > 0 ? "+" : ""}${growth}% → new value ($m)?`, answer };
   }
-
   const GENERATORS = [genPercentage, genMultiplication, genMargin, genGrowth];
   let lastQuestionText = "";
-
   function generateQuestion() {
-    let q;
-    let attempts = 0;
-    do {
-      q = pick(GENERATORS)();
-      attempts++;
-    } while (q.text === lastQuestionText && attempts < 8);
+    let q, attempts = 0;
+    do { q = pick(GENERATORS)(); attempts++; } while (q.text === lastQuestionText && attempts < 8);
     lastQuestionText = q.text;
     return q;
   }
@@ -380,11 +390,8 @@
   // Game loop
   // =====================================================================
   const TOTAL_TIME = 60;
-  let timeLeft = TOTAL_TIME;
-  let score = 0;
-  let currentAnswer = null;
-  let timerInterval = null;
-  let running = false;
+  const RING_CIRC = 2 * Math.PI * 52;
+  let timeLeft = TOTAL_TIME, score = 0, currentAnswer = null, timerInterval = null, running = false;
 
   const qText = document.getElementById("q-text");
   const answerInput = document.getElementById("answer-input");
@@ -392,7 +399,9 @@
   const hudTime = document.getElementById("hud-time");
   const hudScore = document.getElementById("hud-score");
   const hudBest = document.getElementById("hud-best");
-  const timerBar = document.getElementById("timer-bar");
+  const ringFill = document.getElementById("ring-fill");
+
+  ringFill.style.strokeDasharray = String(RING_CIRC);
 
   document.querySelector('[data-game="mental_math_blitz"]').addEventListener("click", startMentalMathBlitz);
   document.getElementById("back-btn").addEventListener("click", () => showScreen("menu"));
@@ -407,13 +416,11 @@
   }
 
   function startMentalMathBlitz() {
-    score = 0;
-    timeLeft = TOTAL_TIME;
-    running = true;
+    score = 0; timeLeft = TOTAL_TIME; running = true;
     hudScore.textContent = "0";
     hudTime.textContent = String(TOTAL_TIME);
-    timerBar.style.width = "100%";
-    timerBar.classList.remove("low");
+    ringFill.style.strokeDashoffset = "0";
+    ringFill.classList.remove("low");
     const localBest = parseInt(localStorage.getItem(LOCAL_BEST_KEY) || "0", 10);
     hudBest.textContent = localBest > 0 ? String(localBest) : "—";
     showScreen("play");
@@ -430,10 +437,11 @@
   }
 
   function updateTimerUI() {
-    hudTime.textContent = String(Math.max(0, timeLeft));
-    const pct = Math.max(0, (timeLeft / TOTAL_TIME) * 100);
-    timerBar.style.width = pct + "%";
-    timerBar.classList.toggle("low", timeLeft <= 10);
+    const t = Math.max(0, timeLeft);
+    hudTime.textContent = String(t);
+    const offset = RING_CIRC * (1 - t / TOTAL_TIME);
+    ringFill.style.strokeDashoffset = String(offset);
+    ringFill.classList.toggle("low", t <= 10);
   }
 
   function nextQuestion() {
@@ -444,15 +452,8 @@
     answerInput.focus();
   }
 
-  function pulse(el) {
-    el.classList.add("pulse");
-    setTimeout(() => el.classList.remove("pulse"), 220);
-  }
-
-  function flashStage(kind) {
-    questionStage.classList.add(kind);
-    setTimeout(() => questionStage.classList.remove(kind), 260);
-  }
+  function pulse(el) { el.classList.add("pulse"); setTimeout(() => el.classList.remove("pulse"), 220); }
+  function flashStage(kind) { questionStage.classList.add(kind); setTimeout(() => questionStage.classList.remove(kind), 260); }
 
   function submitAnswer() {
     if (!running) return;
@@ -471,18 +472,12 @@
       timeLeft = Math.max(0, timeLeft - 3);
       updateTimerUI();
       flashStage("flash-wrong");
-      if (timeLeft <= 0) {
-        endGame();
-      } else {
-        nextQuestion();
-      }
+      if (timeLeft <= 0) endGame(); else nextQuestion();
     }
   }
 
   document.getElementById("submit-answer").addEventListener("click", submitAnswer);
-  answerInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") submitAnswer();
-  });
+  answerInput.addEventListener("keydown", (e) => { if (e.key === "Enter") submitAnswer(); });
 
   async function endGame() {
     running = false;
