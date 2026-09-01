@@ -38,7 +38,6 @@
   h1 { font-family: 'Source Serif 4', Georgia, serif; font-weight: 700; font-size: 26px; margin: 0 0 4px; }
   .sub { color: var(--ink-soft); font-size: 13px; margin-bottom: 22px; }
 
-  /* --- nav --- */
   .top-nav {
     position: sticky; top: 16px; z-index: 100;
     display: flex; align-items: center; justify-content: space-between; gap: 8px;
@@ -60,7 +59,6 @@
   .logout-bar { display: flex; justify-content: flex-end; margin-bottom: 12px; }
   #logout-btn { background: none; border: 1px solid var(--border); color: var(--ink-soft); font-size: 11.5px; font-weight: 600; padding: 7px 14px; border-radius: 5px; cursor: pointer; }
 
-  /* --- login gate --- */
   #login-gate { max-width: 340px; margin: 80px auto; text-align: center; }
   #login-gate .mark { font-family: 'Source Serif 4', Georgia, serif; font-weight: 700; font-size: 15px; color: var(--gold); letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 18px; }
   #login-gate h2 { font-family: 'Source Serif 4', Georgia, serif; font-size: 19px; margin-bottom: 6px; font-weight: 600; }
@@ -72,7 +70,6 @@
   #login-gate input:focus { outline: none; border-color: var(--gold-dim); }
   #login-btn { width: 100%; background: var(--gold); color: #14100A; border: none; border-radius: 5px; padding: 11px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; letter-spacing: 0.03em; margin-top: 2px; }
 
-  /* --- streak strip --- */
   .streak-strip {
     display: flex; align-items: center; gap: 14px;
     background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--gold);
@@ -81,12 +78,10 @@
   .streak-strip .streak-label { font-size: 10.5px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; }
   .streak-strip .streak-num { font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 20px; color: var(--gold); }
 
-  /* --- game grid --- */
   .game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; margin-bottom: 28px; }
   .game-card {
     background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
     padding: 16px; cursor: pointer; transition: border-color 0.14s ease, background 0.14s ease;
-    position: relative;
   }
   .game-card:hover { border-color: var(--gold-dim); background: var(--surface-alt); }
   .game-card.locked { cursor: default; opacity: 0.45; }
@@ -99,12 +94,10 @@
   .game-card.locked .g-tag { color: var(--ink-faint); background: transparent; border: 1px solid var(--border); }
   .game-card .g-best { font-size: 10.5px; color: var(--ink-faint); margin-top: 9px; font-family: 'IBM Plex Mono', monospace; }
 
-  /* --- play screen --- */
-  #play-screen { display: none; }
   .play-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
   .play-back { background: none; border: 1px solid var(--border); color: var(--ink-soft); font-size: 12px; font-weight: 600; padding: 7px 14px; border-radius: 5px; cursor: pointer; }
 
-  .hud-row { display: flex; align-items: center; gap: 30px; justify-content: center; margin-bottom: 30px; flex-wrap: wrap; }
+  .hud-row { display: flex; align-items: center; gap: 30px; justify-content: center; margin-bottom: 24px; flex-wrap: wrap; }
   .timer-ring { position: relative; width: 108px; height: 108px; }
   .timer-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
   .timer-ring circle { fill: none; stroke-width: 4; }
@@ -118,6 +111,11 @@
   .stat-chip .value { font-family: 'IBM Plex Mono', monospace; font-size: 28px; font-weight: 700; transition: transform 0.16s ease; color: var(--ink); }
   .stat-chip .value.pulse { transform: scale(1.15); color: var(--green); }
   .stat-chip .value.best { color: var(--ink-soft); font-size: 20px; }
+  .stat-chip .value.combo { color: var(--gold); }
+
+  .qtimer-track { width: 100%; height: 4px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 20px; }
+  .qtimer-fill { height: 100%; background: var(--gold); width: 100%; }
+  .qtimer-fill.low { background: var(--red); }
 
   .question-stage {
     background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
@@ -126,7 +124,8 @@
   }
   .question-stage.flash-correct { background: var(--green-soft); border-color: var(--green); }
   .question-stage.flash-wrong { background: var(--red-soft); border-color: var(--red); }
-  .q-text { font-family: 'Source Serif 4', Georgia, serif; font-size: 25px; font-weight: 700; margin-bottom: 24px; color: var(--ink); }
+  .q-text { font-family: 'Source Serif 4', Georgia, serif; font-size: 24px; font-weight: 700; margin-bottom: 6px; color: var(--ink); }
+  .q-subtext { font-size: 12px; color: var(--ink-faint); margin-bottom: 24px; text-transform: uppercase; letter-spacing: 0.08em; }
   .answer-row { display: flex; gap: 10px; justify-content: center; }
   #answer-input {
     background: var(--bg); border: 1px solid var(--border); border-radius: 5px;
@@ -138,8 +137,13 @@
     background: var(--gold); color: #14100A; border: none; border-radius: 5px; padding: 12px 20px;
     font-weight: 700; cursor: pointer; font-size: 13.5px; letter-spacing: 0.03em;
   }
+  .hl-btn {
+    background: transparent; border: 1px solid var(--gold-dim); color: var(--gold);
+    padding: 15px 34px; border-radius: 5px; font-weight: 700; letter-spacing: 0.1em;
+    cursor: pointer; font-size: 14px;
+  }
+  .hl-btn:hover { background: var(--gold-soft); }
 
-  /* --- end screen --- */
   #end-screen { display: none; text-align: center; padding: 44px 20px; }
   #end-screen .sub { text-transform: uppercase; letter-spacing: 0.1em; font-size: 11px; }
   #end-screen .final-score { font-family: 'IBM Plex Mono', monospace; font-size: 52px; font-weight: 700; margin: 10px 0; color: var(--gold); }
@@ -194,7 +198,14 @@
       <div class="g-best" id="best-mental_math_blitz">Best: —</div>
     </div>
 
-    <div class="game-card locked"><div class="g-index">02 / 08</div><div class="g-name">Multiple Match</div><div class="g-desc">High or low, before the clock runs out.</div><span class="g-tag">Coming soon</span></div>
+    <div class="game-card" data-game="multiple_match">
+      <div class="g-index">02 / 08</div>
+      <div class="g-name">Multiple Match</div>
+      <div class="g-desc">Call High or Low on a trading multiple before the clock runs out. Chain correct calls for a combo multiplier.</div>
+      <span class="g-tag">Reflex · Combo</span>
+      <div class="g-best" id="best-multiple_match">Best: —</div>
+    </div>
+
     <div class="game-card locked"><div class="g-index">03 / 08</div><div class="g-name">Spot the Red Flag</div><div class="g-desc">Something's off in these numbers — find it fast.</div><span class="g-tag">Coming soon</span></div>
     <div class="game-card locked"><div class="g-index">04 / 08</div><div class="g-name">Statement Sprint</div><div class="g-desc">Sort each line before the next one lands.</div><span class="g-tag">Coming soon</span></div>
     <div class="game-card locked"><div class="g-index">05 / 08</div><div class="g-name">Deal Chain</div><div class="g-desc">Trace the deal process without crossing your own path.</div><span class="g-tag">Coming soon</span></div>
@@ -205,22 +216,15 @@
 </div>
 
 <div id="play-screen">
-  <div class="play-head">
-    <button class="play-back" id="back-btn" type="button">&larr; Back to games</button>
-  </div>
-
+  <div class="play-head"><button class="play-back" id="back-btn" type="button">&larr; Back to games</button></div>
   <div class="hud-row">
     <div class="stat-chip"><div class="label">Score</div><div class="value" id="hud-score">0</div></div>
     <div class="timer-ring">
-      <svg viewBox="0 0 120 120">
-        <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
-        <circle class="ring-fill" id="ring-fill" cx="60" cy="60" r="52"></circle>
-      </svg>
+      <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="52"></circle><circle class="ring-fill" id="ring-fill" cx="60" cy="60" r="52"></circle></svg>
       <div class="ring-label" id="hud-time">60</div>
     </div>
     <div class="stat-chip"><div class="label">Best</div><div class="value best" id="hud-best">—</div></div>
   </div>
-
   <div class="question-stage" id="question-stage">
     <div class="q-text" id="q-text">Ready?</div>
     <div class="answer-row">
@@ -230,8 +234,29 @@
   </div>
 </div>
 
+<div id="play-screen-mm" style="display:none;">
+  <div class="play-head"><button class="play-back" id="back-btn-mm" type="button">&larr; Back to games</button></div>
+  <div class="hud-row">
+    <div class="stat-chip"><div class="label">Score</div><div class="value" id="mm-score">0</div></div>
+    <div class="timer-ring">
+      <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="52"></circle><circle class="ring-fill" id="mm-ring-fill" cx="60" cy="60" r="52"></circle></svg>
+      <div class="ring-label" id="mm-time">45</div>
+    </div>
+    <div class="stat-chip"><div class="label">Combo</div><div class="value combo" id="mm-combo">×1</div></div>
+  </div>
+  <div class="qtimer-track"><div class="qtimer-fill" id="mm-qtimer"></div></div>
+  <div class="question-stage" id="mm-question-stage">
+    <div class="q-text" id="mm-q-text">Ready?</div>
+    <div class="q-subtext" id="mm-q-sub">vs. typical sector range</div>
+    <div class="answer-row">
+      <button type="button" class="hl-btn" data-choice="low">LOW</button>
+      <button type="button" class="hl-btn" data-choice="high">HIGH</button>
+    </div>
+  </div>
+</div>
+
 <div id="end-screen">
-  <div class="sub">Mental Math Blitz</div>
+  <div class="sub" id="end-screen-title">Mental Math Blitz</div>
   <div class="final-score" id="final-score">0</div>
   <div class="best-line" id="best-line">Best: 0</div>
   <button type="button" class="primary" id="play-again-btn">Play again</button>
@@ -258,23 +283,15 @@
     const errEl = document.getElementById("login-error");
     errEl.style.display = "none";
     const { error } = await sb.auth.signInWithPassword({ email, password });
-    if (error) {
-      errEl.textContent = error.message;
-      errEl.style.display = "block";
-    }
+    if (error) { errEl.textContent = error.message; errEl.style.display = "block"; }
   });
-  document.getElementById("login-password").addEventListener("keydown", (e) => {
-    if (e.key === "Enter") document.getElementById("login-btn").click();
-  });
+  document.getElementById("login-password").addEventListener("keydown", (e) => { if (e.key === "Enter") document.getElementById("login-btn").click(); });
+  document.getElementById("logout-btn").addEventListener("click", async () => { await sb.auth.signOut(); });
 
-  document.getElementById("logout-btn").addEventListener("click", async () => {
-    await sb.auth.signOut();
-  });
-
-  const LOCAL_BEST_KEY = "gs_best_mental_math_blitz";
+  const LOCAL_BEST_PREFIX = "gs_best_";
   const LOCAL_DATES_KEY = "gs_played_dates";
-
   function todayStr() { return new Date().toISOString().slice(0, 10); }
+  function localBestKey(game) { return LOCAL_BEST_PREFIX + game; }
 
   function recordLocalPlayDate() {
     const dates = JSON.parse(localStorage.getItem(LOCAL_DATES_KEY) || "[]");
@@ -288,16 +305,15 @@
     let streak = 0;
     let cursor = new Date();
     if (!set.has(todayStr())) cursor.setDate(cursor.getDate() - 1);
-    while (set.has(cursor.toISOString().slice(0, 10))) {
-      streak++;
-      cursor.setDate(cursor.getDate() - 1);
-    }
+    while (set.has(cursor.toISOString().slice(0, 10))) { streak++; cursor.setDate(cursor.getDate() - 1); }
     return streak;
   }
 
+  const GAME_LIST = ["mental_math_blitz", "multiple_match"];
+
   async function loadStreakAndBests() {
     let dates = JSON.parse(localStorage.getItem(LOCAL_DATES_KEY) || "[]");
-    let bestFromDb = null;
+    let dbBests = {};
     try {
       const { data: userData } = await sb.auth.getUser();
       const userId = userData?.user?.id;
@@ -305,8 +321,10 @@
         const { data, error } = await sb.from("game_scores").select("game, score, played_date").eq("user_id", userId);
         if (!error && data) {
           dates = [...new Set(data.map(r => r.played_date))];
-          const mmbScores = data.filter(r => r.game === "mental_math_blitz").map(r => r.score);
-          if (mmbScores.length) bestFromDb = Math.max(...mmbScores);
+          GAME_LIST.forEach(g => {
+            const scores = data.filter(r => r.game === g).map(r => r.score);
+            if (scores.length) dbBests[g] = Math.max(...scores);
+          });
         }
       }
     } catch (e) {
@@ -317,17 +335,18 @@
     document.getElementById("streak-count").textContent = streak;
     document.getElementById("streak-plural").textContent = streak === 1 ? "" : "s";
 
-    const localBest = parseInt(localStorage.getItem(LOCAL_BEST_KEY) || "0", 10);
-    const best = Math.max(localBest, bestFromDb || 0);
-    document.getElementById("best-mental_math_blitz").textContent = best > 0 ? `Best: ${best}` : "Best: —";
+    GAME_LIST.forEach(g => {
+      const localBest = parseInt(localStorage.getItem(localBestKey(g)) || "0", 10);
+      const best = Math.max(localBest, dbBests[g] || 0);
+      const el = document.getElementById("best-" + g);
+      if (el) el.textContent = best > 0 ? `Best: ${best}` : "Best: —";
+    });
   }
 
   async function saveScore(game, score) {
     recordLocalPlayDate();
-    if (game === "mental_math_blitz") {
-      const localBest = parseInt(localStorage.getItem(LOCAL_BEST_KEY) || "0", 10);
-      if (score > localBest) localStorage.setItem(LOCAL_BEST_KEY, String(score));
-    }
+    const localBest = parseInt(localStorage.getItem(localBestKey(game)) || "0", 10);
+    if (score > localBest) localStorage.setItem(localBestKey(game), String(score));
     try {
       const { data: userData } = await sb.auth.getUser();
       const userId = userData?.user?.id;
@@ -339,10 +358,22 @@
     }
   }
 
-  const NICE_PERCENTAGES = [5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90];
   function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
   function pick(arr) { return arr[randInt(0, arr.length - 1)]; }
 
+  function showScreen(id) {
+    ["menu-screen", "play-screen", "play-screen-mm", "end-screen"].forEach(s => {
+      document.getElementById(s).style.display = s === id ? "block" : "none";
+    });
+    if (id === "menu-screen") loadStreakAndBests();
+  }
+
+  document.getElementById("done-btn").addEventListener("click", () => showScreen("menu-screen"));
+
+  // =====================================================================
+  // GAME 1 — Mental Math Blitz
+  // =====================================================================
+  const NICE_PERCENTAGES = [5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90];
   function genPercentage() {
     const p = pick(NICE_PERCENTAGES);
     function gcd(a, b) { return b === 0 ? a : gcd(b, a % b); }
@@ -369,18 +400,18 @@
     const answer = Math.round(base * (1 + growth / 100));
     return { text: `$${base}m growing ${growth > 0 ? "+" : ""}${growth}% → new value ($m)?`, answer };
   }
-  const GENERATORS = [genPercentage, genMultiplication, genMargin, genGrowth];
-  let lastQuestionText = "";
-  function generateQuestion() {
+  const MMB_GENERATORS = [genPercentage, genMultiplication, genMargin, genGrowth];
+  let mmbLastText = "";
+  function generateMMBQuestion() {
     let q, attempts = 0;
-    do { q = pick(GENERATORS)(); attempts++; } while (q.text === lastQuestionText && attempts < 8);
-    lastQuestionText = q.text;
+    do { q = pick(MMB_GENERATORS)(); attempts++; } while (q.text === mmbLastText && attempts < 8);
+    mmbLastText = q.text;
     return q;
   }
 
-  const TOTAL_TIME = 60;
+  const MMB_TOTAL_TIME = 60;
   const RING_CIRC = 2 * Math.PI * 52;
-  let timeLeft = TOTAL_TIME, score = 0, currentAnswer = null, timerInterval = null, running = false;
+  let mmbTimeLeft = MMB_TOTAL_TIME, mmbScore = 0, mmbAnswer = null, mmbInterval = null, mmbRunning = false;
 
   const qText = document.getElementById("q-text");
   const answerInput = document.getElementById("answer-input");
@@ -389,97 +420,237 @@
   const hudScore = document.getElementById("hud-score");
   const hudBest = document.getElementById("hud-best");
   const ringFill = document.getElementById("ring-fill");
-
   ringFill.style.strokeDasharray = String(RING_CIRC);
 
-  document.querySelector('[data-game="mental_math_blitz"]').addEventListener("click", startMentalMathBlitz);
-  document.getElementById("back-btn").addEventListener("click", () => showScreen("menu"));
-  document.getElementById("done-btn").addEventListener("click", () => showScreen("menu"));
-  document.getElementById("play-again-btn").addEventListener("click", startMentalMathBlitz);
+  document.querySelector('[data-game="mental_math_blitz"]').addEventListener("click", startMMB);
+  document.getElementById("back-btn").addEventListener("click", () => showScreen("menu-screen"));
+  document.getElementById("play-again-btn").addEventListener("click", () => {
+    if (currentGame === "mental_math_blitz") startMMB(); else startMM();
+  });
 
-  function showScreen(name) {
-    document.getElementById("menu-screen").style.display = name === "menu" ? "block" : "none";
-    document.getElementById("play-screen").style.display = name === "play" ? "block" : "none";
-    document.getElementById("end-screen").style.display = name === "end" ? "block" : "none";
-    if (name === "menu") loadStreakAndBests();
-  }
+  let currentGame = null;
 
-  function startMentalMathBlitz() {
-    score = 0; timeLeft = TOTAL_TIME; running = true;
+  function startMMB() {
+    currentGame = "mental_math_blitz";
+    mmbScore = 0; mmbTimeLeft = MMB_TOTAL_TIME; mmbRunning = true;
     hudScore.textContent = "0";
-    hudTime.textContent = String(TOTAL_TIME);
+    hudTime.textContent = String(MMB_TOTAL_TIME);
     ringFill.style.strokeDashoffset = "0";
     ringFill.classList.remove("low");
-    const localBest = parseInt(localStorage.getItem(LOCAL_BEST_KEY) || "0", 10);
+    const localBest = parseInt(localStorage.getItem(localBestKey("mental_math_blitz")) || "0", 10);
     hudBest.textContent = localBest > 0 ? String(localBest) : "—";
-    showScreen("play");
-    nextQuestion();
-    answerInput.value = "";
-    answerInput.focus();
+    showScreen("play-screen");
+    mmbNext();
+    answerInput.value = ""; answerInput.focus();
 
-    clearInterval(timerInterval);
-    timerInterval = setInterval(() => {
-      timeLeft -= 1;
-      updateTimerUI();
-      if (timeLeft <= 0) endGame();
+    clearInterval(mmbInterval);
+    mmbInterval = setInterval(() => {
+      mmbTimeLeft -= 1;
+      mmbUpdateTimer();
+      if (mmbTimeLeft <= 0) mmbEnd();
     }, 1000);
   }
 
-  function updateTimerUI() {
-    const t = Math.max(0, timeLeft);
+  function mmbUpdateTimer() {
+    const t = Math.max(0, mmbTimeLeft);
     hudTime.textContent = String(t);
-    const offset = RING_CIRC * (1 - t / TOTAL_TIME);
-    ringFill.style.strokeDashoffset = String(offset);
+    ringFill.style.strokeDashoffset = String(RING_CIRC * (1 - t / MMB_TOTAL_TIME));
     ringFill.classList.toggle("low", t <= 10);
   }
 
-  function nextQuestion() {
-    const q = generateQuestion();
-    currentAnswer = q.answer;
+  function mmbNext() {
+    const q = generateMMBQuestion();
+    mmbAnswer = q.answer;
     qText.textContent = q.text;
-    answerInput.value = "";
-    answerInput.focus();
+    answerInput.value = ""; answerInput.focus();
   }
 
   function pulse(el) { el.classList.add("pulse"); setTimeout(() => el.classList.remove("pulse"), 220); }
-  function flashStage(kind) { questionStage.classList.add(kind); setTimeout(() => questionStage.classList.remove(kind), 260); }
+  function flashStage(el, kind) { el.classList.add(kind); setTimeout(() => el.classList.remove(kind), 260); }
 
-  function submitAnswer() {
-    if (!running) return;
+  function mmbSubmit() {
+    if (!mmbRunning) return;
     const raw = answerInput.value.trim();
     if (raw === "") return;
     const val = parseFloat(raw);
     if (Number.isNaN(val)) return;
 
-    if (Math.round(val) === currentAnswer) {
-      score += 1;
-      hudScore.textContent = String(score);
+    if (Math.round(val) === mmbAnswer) {
+      mmbScore += 1;
+      hudScore.textContent = String(mmbScore);
       pulse(hudScore);
-      flashStage("flash-correct");
-      nextQuestion();
+      flashStage(questionStage, "flash-correct");
+      mmbNext();
     } else {
-      timeLeft = Math.max(0, timeLeft - 3);
-      updateTimerUI();
-      flashStage("flash-wrong");
-      if (timeLeft <= 0) endGame(); else nextQuestion();
+      mmbTimeLeft = Math.max(0, mmbTimeLeft - 3);
+      mmbUpdateTimer();
+      flashStage(questionStage, "flash-wrong");
+      if (mmbTimeLeft <= 0) mmbEnd(); else mmbNext();
     }
   }
+  document.getElementById("submit-answer").addEventListener("click", mmbSubmit);
+  answerInput.addEventListener("keydown", (e) => { if (e.key === "Enter") mmbSubmit(); });
 
-  document.getElementById("submit-answer").addEventListener("click", submitAnswer);
-  answerInput.addEventListener("keydown", (e) => { if (e.key === "Enter") submitAnswer(); });
+  async function mmbEnd() {
+    mmbRunning = false;
+    clearInterval(mmbInterval);
+    finishGame("mental_math_blitz", mmbScore, "Mental Math Blitz");
+  }
 
-  async function endGame() {
-    running = false;
-    clearInterval(timerInterval);
-    const localBestBefore = parseInt(localStorage.getItem(LOCAL_BEST_KEY) || "0", 10);
+  // =====================================================================
+  // GAME 2 — Multiple Match
+  // =====================================================================
+  const SECTOR_MULTIPLES = [
+    { name: "SaaS / Software", metric: "EV/EBITDA", low: 18, high: 28 },
+    { name: "Grocery Retail", metric: "EV/EBITDA", low: 5, high: 8 },
+    { name: "Consumer Retail", metric: "EV/EBITDA", low: 6, high: 10 },
+    { name: "Industrials", metric: "EV/EBITDA", low: 7, high: 11 },
+    { name: "Healthcare / Pharma", metric: "EV/EBITDA", low: 12, high: 18 },
+    { name: "Energy (Oil & Gas)", metric: "EV/EBITDA", low: 4, high: 7 },
+    { name: "Telecom", metric: "EV/EBITDA", low: 6, high: 9 },
+    { name: "Media", metric: "EV/EBITDA", low: 8, high: 12 },
+    { name: "Real Estate (REIT)", metric: "EV/EBITDA", low: 12, high: 16 },
+    { name: "Automotive", metric: "EV/EBITDA", low: 5, high: 8 },
+    { name: "Luxury Goods", metric: "EV/EBITDA", low: 14, high: 20 },
+    { name: "Semiconductors", metric: "EV/EBITDA", low: 12, high: 18 },
+  ];
+
+  let mmLastKey = "";
+  function generateMMQuestion() {
+    let sector, value, correct, key;
+    let attempts = 0;
+    do {
+      sector = pick(SECTOR_MULTIPLES);
+      const goHigh = Math.random() < 0.5;
+      value = goHigh ? sector.high + randInt(2, 8) : Math.max(1, sector.low - randInt(2, 5));
+      value = value + (Math.random() < 0.5 ? 0 : 0.5);
+      correct = goHigh ? "high" : "low";
+      key = sector.name + value;
+      attempts++;
+    } while (key === mmLastKey && attempts < 8);
+    mmLastKey = key;
+    return { sectorName: sector.name, metric: sector.metric, value, correct };
+  }
+
+  const MM_TOTAL_TIME = 45;
+  const MM_Q_TIME_MS = 3500;
+  let mmTimeLeft = MM_TOTAL_TIME, mmScore = 0, mmCombo = 0, mmMultiplier = 1;
+  let mmSessionInterval = null, mmQTimeout = null, mmRunning = false, mmCurrent = null;
+
+  const mmScoreEl = document.getElementById("mm-score");
+  const mmTimeEl = document.getElementById("mm-time");
+  const mmComboEl = document.getElementById("mm-combo");
+  const mmRing = document.getElementById("mm-ring-fill");
+  const mmQTimerBar = document.getElementById("mm-qtimer");
+  const mmQText = document.getElementById("mm-q-text");
+  const mmQSub = document.getElementById("mm-q-sub");
+  const mmStage = document.getElementById("mm-question-stage");
+  mmRing.style.strokeDasharray = String(RING_CIRC);
+
+  document.querySelector('[data-game="multiple_match"]').addEventListener("click", startMM);
+  document.getElementById("back-btn-mm").addEventListener("click", () => { clearTimeout(mmQTimeout); clearInterval(mmSessionInterval); showScreen("menu-screen"); });
+
+  function startMM() {
+    currentGame = "multiple_match";
+    mmScore = 0; mmCombo = 0; mmMultiplier = 1; mmTimeLeft = MM_TOTAL_TIME; mmRunning = true;
+    mmScoreEl.textContent = "0";
+    mmComboEl.textContent = "×1";
+    mmTimeEl.textContent = String(MM_TOTAL_TIME);
+    mmRing.style.strokeDashoffset = "0";
+    mmRing.classList.remove("low");
+    showScreen("play-screen-mm");
+    mmNextQuestion();
+
+    clearInterval(mmSessionInterval);
+    mmSessionInterval = setInterval(() => {
+      mmTimeLeft -= 1;
+      mmUpdateSessionTimer();
+      if (mmTimeLeft <= 0) mmEnd();
+    }, 1000);
+  }
+
+  function mmUpdateSessionTimer() {
+    const t = Math.max(0, mmTimeLeft);
+    mmTimeEl.textContent = String(t);
+    mmRing.style.strokeDashoffset = String(RING_CIRC * (1 - t / MM_TOTAL_TIME));
+    mmRing.classList.toggle("low", t <= 8);
+  }
+
+  function mmUpdateMultiplier() {
+    if (mmCombo >= 9) mmMultiplier = 4;
+    else if (mmCombo >= 6) mmMultiplier = 3;
+    else if (mmCombo >= 3) mmMultiplier = 2;
+    else mmMultiplier = 1;
+    mmComboEl.textContent = "×" + mmMultiplier;
+  }
+
+  function mmNextQuestion() {
+    if (!mmRunning) return;
+    mmCurrent = generateMMQuestion();
+    mmQText.textContent = `${mmCurrent.sectorName} — ${mmCurrent.metric} ${mmCurrent.value}x`;
+    mmQSub.textContent = "vs. typical sector range";
+
+    mmQTimerBar.style.transition = "none";
+    mmQTimerBar.style.width = "100%";
+    mmQTimerBar.classList.remove("low");
+    void mmQTimerBar.offsetWidth; // force reflow so the transition below actually restarts
+    mmQTimerBar.style.transition = `width ${MM_Q_TIME_MS}ms linear`;
+    mmQTimerBar.style.width = "0%";
+    setTimeout(() => mmQTimerBar.classList.add("low"), MM_Q_TIME_MS * 0.6);
+
+    clearTimeout(mmQTimeout);
+    mmQTimeout = setTimeout(() => mmAnswer(null), MM_Q_TIME_MS);
+  }
+
+  function mmAnswer(choice) {
+    if (!mmRunning || !mmCurrent) return;
+    clearTimeout(mmQTimeout);
+    const correct = choice === mmCurrent.correct;
+
+    if (correct) {
+      mmCombo += 1;
+      mmUpdateMultiplier();
+      mmScore += mmMultiplier;
+      mmScoreEl.textContent = String(mmScore);
+      pulse(mmScoreEl);
+      flashStage(mmStage, "flash-correct");
+    } else {
+      mmCombo = 0;
+      mmUpdateMultiplier();
+      mmTimeLeft = Math.max(0, mmTimeLeft - 2);
+      mmUpdateSessionTimer();
+      flashStage(mmStage, "flash-wrong");
+    }
+
+    if (mmTimeLeft <= 0) { mmEnd(); return; }
+    mmNextQuestion();
+  }
+
+  document.querySelectorAll("#play-screen-mm .hl-btn").forEach(btn => {
+    btn.addEventListener("click", () => mmAnswer(btn.dataset.choice));
+  });
+
+  async function mmEnd() {
+    mmRunning = false;
+    clearInterval(mmSessionInterval);
+    clearTimeout(mmQTimeout);
+    finishGame("multiple_match", mmScore, "Multiple Match");
+  }
+
+  // =====================================================================
+  // Shared end screen
+  // =====================================================================
+  async function finishGame(game, score, displayName) {
+    const localBestBefore = parseInt(localStorage.getItem(localBestKey(game)) || "0", 10);
     const isNewBest = score > localBestBefore;
 
+    document.getElementById("end-screen-title").textContent = displayName;
     document.getElementById("final-score").textContent = String(score);
     document.getElementById("best-line").textContent = isNewBest ? "New personal best!" : `Best: ${Math.max(score, localBestBefore)}`;
     document.getElementById("best-line").classList.toggle("new-best", isNewBest);
-    showScreen("end");
+    showScreen("end-screen");
 
-    await saveScore("mental_math_blitz", score);
+    await saveScore(game, score);
   }
 </script>
 </body>
