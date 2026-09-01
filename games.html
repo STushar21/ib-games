@@ -124,7 +124,7 @@
   .question-stage.flash-wrong { background: var(--red-soft); border-color: var(--red); }
   .q-text { font-family: 'Source Serif 4', Georgia, serif; font-size: 24px; font-weight: 700; margin-bottom: 6px; color: var(--ink); }
   .q-subtext { font-size: 12px; color: var(--ink-faint); margin-bottom: 24px; text-transform: uppercase; letter-spacing: 0.08em; }
-  .answer-row { display: flex; gap: 10px; justify-content: center; }
+  .answer-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
   #answer-input {
     background: var(--bg); border: 1px solid var(--border); border-radius: 5px;
     padding: 12px 16px; font-size: 17px; font-family: 'IBM Plex Mono', monospace; font-weight: 600;
@@ -141,6 +141,9 @@
     cursor: pointer; font-size: 14px;
   }
   .hl-btn:hover { background: var(--gold-soft); }
+  .hl-btn.tri { padding: 13px 20px; font-size: 12px; letter-spacing: 0.05em; }
+  .hl-btn.correct-flag { border-color: var(--green); color: var(--green); background: var(--green-soft); }
+  .hl-btn.wrong-flag { border-color: var(--red); color: var(--red); background: var(--red-soft); }
 
   .stmt-list { text-align: left; max-width: 380px; margin: 0 auto; }
   .stmt-row {
@@ -225,7 +228,14 @@
       <div class="g-best" id="best-spot_the_red_flag">Best: —</div>
     </div>
 
-    <div class="game-card locked"><div class="g-index">04 / 08</div><div class="g-name">Statement Sprint</div><div class="g-desc">Sort each line before the next one lands.</div><span class="g-tag">Coming soon</span></div>
+    <div class="game-card" data-game="statement_sprint">
+      <div class="g-index">04 / 08</div>
+      <div class="g-name">Statement Sprint</div>
+      <div class="g-desc">Sort each line item into Income Statement, Balance Sheet, or Cash Flow. Gets faster the longer your streak holds.</div>
+      <span class="g-tag">Reflex · Ramping</span>
+      <div class="g-best" id="best-statement_sprint">Best: —</div>
+    </div>
+
     <div class="game-card locked"><div class="g-index">05 / 08</div><div class="g-name">Deal Chain</div><div class="g-desc">Trace the deal process without crossing your own path.</div><span class="g-tag">Coming soon</span></div>
     <div class="game-card locked"><div class="g-index">06 / 08</div><div class="g-name">Comp Grid</div><div class="g-desc">Place companies so every row and column checks out.</div><span class="g-tag">Coming soon</span></div>
     <div class="game-card locked"><div class="g-index">07 / 08</div><div class="g-name">Ratio Ladder</div><div class="g-desc">One input at a time, climb to the target ratio.</div><span class="g-tag">Coming soon</span></div>
@@ -291,6 +301,28 @@
   </div>
 </div>
 
+<div id="play-screen-ss" style="display:none;">
+  <div class="play-head"><button class="play-back" id="back-btn-ss" type="button">&larr; Back to games</button></div>
+  <div class="hud-row">
+    <div class="stat-chip"><div class="label">Score</div><div class="value" id="ss-score">0</div></div>
+    <div class="timer-ring">
+      <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="52"></circle><circle class="ring-fill" id="ss-ring-fill" cx="60" cy="60" r="52"></circle></svg>
+      <div class="ring-label" id="ss-time">45</div>
+    </div>
+    <div class="stat-chip"><div class="label">Streak</div><div class="value combo" id="ss-streak">0</div></div>
+  </div>
+  <div class="qtimer-track"><div class="qtimer-fill" id="ss-qtimer"></div></div>
+  <div class="question-stage" id="ss-question-stage">
+    <div class="q-text" id="ss-q-text">Ready?</div>
+    <div class="q-subtext">which statement is this on?</div>
+    <div class="answer-row">
+      <button type="button" class="hl-btn tri" data-choice="IS">Income Statement</button>
+      <button type="button" class="hl-btn tri" data-choice="BS">Balance Sheet</button>
+      <button type="button" class="hl-btn tri" data-choice="CF">Cash Flow</button>
+    </div>
+  </div>
+</div>
+
 <div id="end-screen">
   <div class="sub" id="end-screen-title">Mental Math Blitz</div>
   <div class="final-score" id="final-score">0</div>
@@ -345,7 +377,7 @@
     return streak;
   }
 
-  const GAME_LIST = ["mental_math_blitz", "multiple_match", "spot_the_red_flag"];
+  const GAME_LIST = ["mental_math_blitz", "multiple_match", "spot_the_red_flag", "statement_sprint"];
 
   async function loadStreakAndBests() {
     let dates = JSON.parse(localStorage.getItem(LOCAL_DATES_KEY) || "[]");
@@ -398,7 +430,7 @@
   function pick(arr) { return arr[randInt(0, arr.length - 1)]; }
 
   function showScreen(id) {
-    ["menu-screen", "play-screen", "play-screen-mm", "play-screen-srf", "end-screen"].forEach(s => {
+    ["menu-screen", "play-screen", "play-screen-mm", "play-screen-srf", "play-screen-ss", "end-screen"].forEach(s => {
       document.getElementById(s).style.display = s === id ? "block" : "none";
     });
     if (id === "menu-screen") loadStreakAndBests();
@@ -407,6 +439,14 @@
   document.getElementById("done-btn").addEventListener("click", () => showScreen("menu-screen"));
   function pulse(el) { el.classList.add("pulse"); setTimeout(() => el.classList.remove("pulse"), 220); }
   function flashStage(el, kind) { el.classList.add(kind); setTimeout(() => el.classList.remove(kind), 400); }
+
+  let currentGame = null;
+  document.getElementById("play-again-btn").addEventListener("click", () => {
+    if (currentGame === "mental_math_blitz") startMMB();
+    else if (currentGame === "multiple_match") startMM();
+    else if (currentGame === "spot_the_red_flag") startSRF();
+    else startSS();
+  });
 
   // =====================================================================
   // GAME 1 — Mental Math Blitz
@@ -462,13 +502,6 @@
 
   document.querySelector('[data-game="mental_math_blitz"]').addEventListener("click", startMMB);
   document.getElementById("back-btn").addEventListener("click", () => showScreen("menu-screen"));
-  document.getElementById("play-again-btn").addEventListener("click", () => {
-    if (currentGame === "mental_math_blitz") startMMB();
-    else if (currentGame === "multiple_match") startMM();
-    else startSRF();
-  });
-
-  let currentGame = null;
 
   function startMMB() {
     currentGame = "mental_math_blitz";
@@ -839,6 +872,150 @@
     clearInterval(srfInterval);
     clearTimeout(srfRoundTimeout);
     finishGame("spot_the_red_flag", srfScore, "Spot the Red Flag");
+  }
+
+  // =====================================================================
+  // GAME 4 — Statement Sprint
+  // =====================================================================
+  const SPRINT_ITEMS = [
+    { label: "Revenue", cat: "IS" }, { label: "Cost of Goods Sold", cat: "IS" },
+    { label: "Gross Profit", cat: "IS" }, { label: "SG&A Expense", cat: "IS" },
+    { label: "Operating Income", cat: "IS" }, { label: "Interest Expense", cat: "IS" },
+    { label: "Income Tax Expense", cat: "IS" }, { label: "Net Income", cat: "IS" },
+    { label: "EBITDA", cat: "IS" }, { label: "R&D Expense", cat: "IS" },
+    { label: "Cash and Equivalents", cat: "BS" }, { label: "Accounts Receivable", cat: "BS" },
+    { label: "Inventory", cat: "BS" }, { label: "Prepaid Expenses", cat: "BS" },
+    { label: "Property, Plant & Equipment", cat: "BS" }, { label: "Goodwill", cat: "BS" },
+    { label: "Total Assets", cat: "BS" }, { label: "Accounts Payable", cat: "BS" },
+    { label: "Short-Term Debt", cat: "BS" }, { label: "Long-Term Debt", cat: "BS" },
+    { label: "Total Liabilities", cat: "BS" }, { label: "Common Stock", cat: "BS" },
+    { label: "Retained Earnings", cat: "BS" }, { label: "Total Shareholders' Equity", cat: "BS" },
+    { label: "Cash from Operating Activities", cat: "CF" }, { label: "Capital Expenditures", cat: "CF" },
+    { label: "Cash from Investing Activities", cat: "CF" }, { label: "Proceeds from Debt Issuance", cat: "CF" },
+    { label: "Dividends Paid", cat: "CF" }, { label: "Cash from Financing Activities", cat: "CF" },
+    { label: "Net Change in Cash", cat: "CF" }, { label: "Change in Working Capital", cat: "CF" },
+    { label: "Stock-Based Comp Add-back", cat: "CF" }, { label: "Free Cash Flow", cat: "CF" },
+  ];
+
+  let ssLastLabel = "";
+  function generateSprintItem() {
+    let item, attempts = 0;
+    do { item = pick(SPRINT_ITEMS); attempts++; } while (item.label === ssLastLabel && attempts < 8);
+    ssLastLabel = item.label;
+    return item;
+  }
+
+  const SS_TOTAL_TIME = 45;
+  const SS_ITEM_START_MS = 3200;
+  const SS_ITEM_MIN_MS = 1200;
+  const SS_ITEM_STEP_MS = 130;
+  let ssTimeLeft = SS_TOTAL_TIME, ssScore = 0, ssStreak = 0, ssCurrent = null;
+  let ssSessionInterval = null, ssItemTimeout = null, ssRunning = false, ssLocked = false;
+
+  const ssScoreEl = document.getElementById("ss-score");
+  const ssTimeEl = document.getElementById("ss-time");
+  const ssStreakEl = document.getElementById("ss-streak");
+  const ssRing = document.getElementById("ss-ring-fill");
+  const ssQTimerBar = document.getElementById("ss-qtimer");
+  const ssQText = document.getElementById("ss-q-text");
+  const ssStage = document.getElementById("ss-question-stage");
+  ssRing.style.strokeDasharray = String(RING_CIRC);
+
+  document.querySelector('[data-game="statement_sprint"]').addEventListener("click", startSS);
+  document.getElementById("back-btn-ss").addEventListener("click", () => { clearTimeout(ssItemTimeout); clearInterval(ssSessionInterval); showScreen("menu-screen"); });
+
+  function startSS() {
+    currentGame = "statement_sprint";
+    ssScore = 0; ssStreak = 0; ssTimeLeft = SS_TOTAL_TIME; ssRunning = true; ssLocked = false;
+    ssScoreEl.textContent = "0";
+    ssStreakEl.textContent = "0";
+    ssTimeEl.textContent = String(SS_TOTAL_TIME);
+    ssRing.style.strokeDashoffset = "0";
+    ssRing.classList.remove("low");
+    showScreen("play-screen-ss");
+    ssNextItem();
+
+    clearInterval(ssSessionInterval);
+    ssSessionInterval = setInterval(() => {
+      ssTimeLeft -= 1;
+      ssUpdateSessionTimer();
+      if (ssTimeLeft <= 0) ssEnd();
+    }, 1000);
+  }
+
+  function ssUpdateSessionTimer() {
+    const t = Math.max(0, ssTimeLeft);
+    ssTimeEl.textContent = String(t);
+    ssRing.style.strokeDashoffset = String(RING_CIRC * (1 - t / SS_TOTAL_TIME));
+    ssRing.classList.toggle("low", t <= 8);
+  }
+
+  function ssCurrentItemTimeMs() {
+    return Math.max(SS_ITEM_MIN_MS, SS_ITEM_START_MS - ssStreak * SS_ITEM_STEP_MS);
+  }
+
+  function ssNextItem() {
+    if (!ssRunning) return;
+    ssLocked = false;
+    document.querySelectorAll("#play-screen-ss .hl-btn").forEach(b => b.classList.remove("correct-flag", "wrong-flag"));
+    ssCurrent = generateSprintItem();
+    ssQText.textContent = ssCurrent.label;
+
+    const dur = ssCurrentItemTimeMs();
+    ssQTimerBar.style.transition = "none";
+    ssQTimerBar.style.width = "100%";
+    ssQTimerBar.classList.remove("low");
+    void ssQTimerBar.offsetWidth;
+    ssQTimerBar.style.transition = `width ${dur}ms linear`;
+    ssQTimerBar.style.width = "0%";
+    setTimeout(() => ssQTimerBar.classList.add("low"), dur * 0.6);
+
+    clearTimeout(ssItemTimeout);
+    ssItemTimeout = setTimeout(() => ssAnswer(null), dur);
+  }
+
+  function ssAnswer(choice) {
+    if (!ssRunning || !ssCurrent || ssLocked) return;
+    ssLocked = true;
+    clearTimeout(ssItemTimeout);
+    const correct = choice === ssCurrent.cat;
+    const btns = document.querySelectorAll("#play-screen-ss .hl-btn");
+
+    btns.forEach(b => {
+      if (b.dataset.choice === ssCurrent.cat) b.classList.add("correct-flag");
+      else if (b.dataset.choice === choice) b.classList.add("wrong-flag");
+    });
+
+    if (correct) {
+      ssStreak += 1;
+      ssScore += 1;
+      ssScoreEl.textContent = String(ssScore);
+      ssStreakEl.textContent = String(ssStreak);
+      pulse(ssScoreEl);
+      flashStage(ssStage, "flash-correct");
+    } else {
+      ssStreak = 0;
+      ssStreakEl.textContent = "0";
+      ssTimeLeft = Math.max(0, ssTimeLeft - 3);
+      ssUpdateSessionTimer();
+      flashStage(ssStage, "flash-wrong");
+    }
+
+    setTimeout(() => {
+      if (ssTimeLeft <= 0) { ssEnd(); return; }
+      ssNextItem();
+    }, 450);
+  }
+
+  document.querySelectorAll("#play-screen-ss .hl-btn").forEach(btn => {
+    btn.addEventListener("click", () => ssAnswer(btn.dataset.choice));
+  });
+
+  async function ssEnd() {
+    ssRunning = false;
+    clearInterval(ssSessionInterval);
+    clearTimeout(ssItemTimeout);
+    finishGame("statement_sprint", ssScore, "Statement Sprint");
   }
 
   // =====================================================================
