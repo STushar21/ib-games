@@ -158,6 +158,20 @@
   .stmt-label { font-size: 13px; color: var(--ink-soft); }
   .stmt-value { font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600; color: var(--ink); }
 
+  .dc-grid-wrap { position: relative; max-width: 480px; margin: 0 auto; }
+  .dc-lines-overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
+  .dc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; position: relative; z-index: 1; }
+  .dc-cell {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+    padding: 12px 8px; min-height: 60px; display: flex; align-items: center; justify-content: center;
+    text-align: center; font-size: 11px; line-height: 1.3; color: var(--ink-soft); cursor: pointer;
+    transition: border-color 0.12s ease, background 0.12s ease, color 0.12s ease;
+  }
+  .dc-cell:hover { border-color: var(--gold-dim); }
+  .dc-cell.dc-done { border-color: var(--green); background: var(--green-soft); color: var(--ink); font-weight: 600; }
+  .dc-cell.dc-wrong { border-color: var(--red); background: var(--red-soft); }
+  .dc-line { stroke: var(--gold); stroke-width: 2.5; }
+
   #end-screen { display: none; text-align: center; padding: 44px 20px; }
   #end-screen .sub { text-transform: uppercase; letter-spacing: 0.1em; font-size: 11px; }
   #end-screen .final-score { font-family: 'IBM Plex Mono', monospace; font-size: 52px; font-weight: 700; margin: 10px 0; color: var(--gold); }
@@ -236,7 +250,13 @@
       <div class="g-best" id="best-statement_sprint">Best: —</div>
     </div>
 
-    <div class="game-card locked"><div class="g-index">05 / 08</div><div class="g-name">Deal Chain</div><div class="g-desc">Trace the deal process without crossing your own path.</div><span class="g-tag">Coming soon</span></div>
+    <div class="game-card" data-game="deal_chain">
+      <div class="g-index">05 / 08</div>
+      <div class="g-name">Deal Chain</div>
+      <div class="g-desc">Click the process steps in the right order. Decoys from other deals are mixed in to throw you off.</div>
+      <span class="g-tag">Puzzle · Sequence</span>
+      <div class="g-best" id="best-deal_chain">Best: —</div>
+    </div>
     <div class="game-card locked"><div class="g-index">06 / 08</div><div class="g-name">Comp Grid</div><div class="g-desc">Place companies so every row and column checks out.</div><span class="g-tag">Coming soon</span></div>
     <div class="game-card locked"><div class="g-index">07 / 08</div><div class="g-name">Ratio Ladder</div><div class="g-desc">One input at a time, climb to the target ratio.</div><span class="g-tag">Coming soon</span></div>
     <div class="game-card locked"><div class="g-index">08 / 08</div><div class="g-name">Sector Pinpoint</div><div class="g-desc">Guess the company from as few clues as possible.</div><span class="g-tag">Coming soon</span></div>
@@ -323,6 +343,26 @@
   </div>
 </div>
 
+<div id="play-screen-dc" style="display:none;">
+  <div class="play-head"><button class="play-back" id="back-btn-dc" type="button">&larr; Back to games</button></div>
+  <div class="hud-row">
+    <div class="stat-chip"><div class="label">Chains</div><div class="value" id="dc-score">0</div></div>
+    <div class="timer-ring">
+      <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="52"></circle><circle class="ring-fill" id="dc-ring-fill" cx="60" cy="60" r="52"></circle></svg>
+      <div class="ring-label" id="dc-time">60</div>
+    </div>
+    <div class="stat-chip"><div class="label">Best</div><div class="value best" id="dc-best">—</div></div>
+  </div>
+  <div class="question-stage compact" id="dc-question-stage">
+    <div class="q-text">Trace the process, in order</div>
+    <div class="q-subtext" id="dc-process-name">M&amp;A Deal Process</div>
+    <div class="dc-grid-wrap">
+      <svg class="dc-lines-overlay" id="dc-lines"></svg>
+      <div class="dc-grid" id="dc-grid"></div>
+    </div>
+  </div>
+</div>
+
 <div id="end-screen">
   <div class="sub" id="end-screen-title">Mental Math Blitz</div>
   <div class="final-score" id="final-score">0</div>
@@ -377,7 +417,7 @@
     return streak;
   }
 
-  const GAME_LIST = ["mental_math_blitz", "multiple_match", "spot_the_red_flag", "statement_sprint"];
+  const GAME_LIST = ["mental_math_blitz", "multiple_match", "spot_the_red_flag", "statement_sprint", "deal_chain"];
 
   async function loadStreakAndBests() {
     let dates = JSON.parse(localStorage.getItem(LOCAL_DATES_KEY) || "[]");
@@ -430,7 +470,7 @@
   function pick(arr) { return arr[randInt(0, arr.length - 1)]; }
 
   function showScreen(id) {
-    ["menu-screen", "play-screen", "play-screen-mm", "play-screen-srf", "play-screen-ss", "end-screen"].forEach(s => {
+    ["menu-screen", "play-screen", "play-screen-mm", "play-screen-srf", "play-screen-ss", "play-screen-dc", "end-screen"].forEach(s => {
       document.getElementById(s).style.display = s === id ? "block" : "none";
     });
     if (id === "menu-screen") loadStreakAndBests();
@@ -445,7 +485,8 @@
     if (currentGame === "mental_math_blitz") startMMB();
     else if (currentGame === "multiple_match") startMM();
     else if (currentGame === "spot_the_red_flag") startSRF();
-    else startSS();
+    else if (currentGame === "statement_sprint") startSS();
+    else startDC();
   });
 
   // =====================================================================
@@ -1016,6 +1057,154 @@
     clearInterval(ssSessionInterval);
     clearTimeout(ssItemTimeout);
     finishGame("statement_sprint", ssScore, "Statement Sprint");
+  }
+
+  // =====================================================================
+  // GAME 5 — Deal Chain
+  // =====================================================================
+  const PROCESSES = [
+    { name: "M&A Deal Process", steps: ["Origination", "NDA Signed", "Management Meetings", "Due Diligence", "Signing", "Closing"] },
+    { name: "LBO Process", steps: ["Target Identification", "Preliminary Valuation", "LOI Submitted", "Due Diligence", "Debt Financing Arranged", "Closing"] },
+    { name: "IPO Process", steps: ["Select Underwriters", "Draft S-1", "Roadshow", "Pricing", "Allocation", "First Day of Trading"] },
+  ];
+
+  function shuffleArr(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = randInt(0, i);
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function generateDealChainRound() {
+    const process = pick(PROCESSES);
+    const decoyPool = PROCESSES
+      .filter(p => p.name !== process.name)
+      .flatMap(p => p.steps)
+      .filter(label => !process.steps.includes(label));
+    const decoys = shuffleArr(decoyPool).slice(0, 2);
+
+    const items = process.steps.map((label, i) => ({ label, correctIndex: i }))
+      .concat(decoys.map(label => ({ label, correctIndex: -1 })));
+
+    return { processName: process.name, items: shuffleArr(items), total: process.steps.length };
+  }
+
+  const DC_TOTAL_TIME = 60;
+  let dcTimeLeft = DC_TOTAL_TIME, dcScore = 0, dcRound = null, dcNextExpected = 0, dcInterval = null, dcRunning = false, dcLocked = false;
+  let dcDoneCells = [];
+
+  const dcScoreEl = document.getElementById("dc-score");
+  const dcTimeEl = document.getElementById("dc-time");
+  const dcBestEl = document.getElementById("dc-best");
+  const dcRing = document.getElementById("dc-ring-fill");
+  const dcProcessName = document.getElementById("dc-process-name");
+  const dcGrid = document.getElementById("dc-grid");
+  const dcLines = document.getElementById("dc-lines");
+  const dcWrap = document.querySelector(".dc-grid-wrap");
+  const dcStage = document.getElementById("dc-question-stage");
+  dcRing.style.strokeDasharray = String(RING_CIRC);
+
+  document.querySelector('[data-game="deal_chain"]').addEventListener("click", startDC);
+  document.getElementById("back-btn-dc").addEventListener("click", () => { clearInterval(dcInterval); showScreen("menu-screen"); });
+
+  function startDC() {
+    currentGame = "deal_chain";
+    dcScore = 0; dcTimeLeft = DC_TOTAL_TIME; dcRunning = true;
+    dcScoreEl.textContent = "0";
+    dcTimeEl.textContent = String(DC_TOTAL_TIME);
+    dcRing.style.strokeDashoffset = "0";
+    dcRing.classList.remove("low");
+    const localBest = parseInt(localStorage.getItem(localBestKey("deal_chain")) || "0", 10);
+    dcBestEl.textContent = localBest > 0 ? String(localBest) : "—";
+    showScreen("play-screen-dc");
+    dcNextRound();
+
+    clearInterval(dcInterval);
+    dcInterval = setInterval(() => {
+      dcTimeLeft -= 1;
+      dcUpdateTimer();
+      if (dcTimeLeft <= 0) dcEnd();
+    }, 1000);
+  }
+
+  function dcUpdateTimer() {
+    const t = Math.max(0, dcTimeLeft);
+    dcTimeEl.textContent = String(t);
+    dcRing.style.strokeDashoffset = String(RING_CIRC * (1 - t / DC_TOTAL_TIME));
+    dcRing.classList.toggle("low", t <= 10);
+  }
+
+  function dcNextRound() {
+    if (!dcRunning) return;
+    dcLocked = false;
+    dcNextExpected = 0;
+    dcDoneCells = [];
+    dcRound = generateDealChainRound();
+    dcProcessName.textContent = dcRound.processName;
+
+    dcGrid.innerHTML = "";
+    dcLines.innerHTML = "";
+    dcRound.items.forEach(item => {
+      const cell = document.createElement("div");
+      cell.className = "dc-cell";
+      cell.textContent = item.label;
+      cell.dataset.correctIndex = item.correctIndex;
+      cell.addEventListener("click", () => dcCellClick(cell, item.correctIndex));
+      dcGrid.appendChild(cell);
+    });
+  }
+
+  function dcCenter(el) {
+    const wrapRect = dcWrap.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
+    return { x: r.left + r.width / 2 - wrapRect.left, y: r.top + r.height / 2 - wrapRect.top };
+  }
+
+  function dcDrawLine(fromEl, toEl) {
+    const a = dcCenter(fromEl), b = dcCenter(toEl);
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("x1", a.x); line.setAttribute("y1", a.y);
+    line.setAttribute("x2", b.x); line.setAttribute("y2", b.y);
+    line.setAttribute("class", "dc-line");
+    dcLines.appendChild(line);
+  }
+
+  function dcCellClick(cell, correctIndex) {
+    if (!dcRunning || dcLocked || cell.classList.contains("dc-done")) return;
+
+    if (correctIndex === dcNextExpected) {
+      cell.classList.add("dc-done");
+      if (dcDoneCells.length > 0) dcDrawLine(dcDoneCells[dcDoneCells.length - 1], cell);
+      dcDoneCells.push(cell);
+      dcNextExpected += 1;
+
+      if (dcNextExpected === dcRound.total) {
+        dcScore += 1;
+        dcScoreEl.textContent = String(dcScore);
+        pulse(dcScoreEl);
+        flashStage(dcStage, "flash-correct");
+        dcLocked = true;
+        setTimeout(() => {
+          if (dcTimeLeft <= 0) { dcEnd(); return; }
+          dcNextRound();
+        }, 650);
+      }
+    } else {
+      cell.classList.add("dc-wrong");
+      setTimeout(() => cell.classList.remove("dc-wrong"), 350);
+      dcTimeLeft = Math.max(0, dcTimeLeft - 4);
+      dcUpdateTimer();
+      flashStage(dcStage, "flash-wrong");
+      if (dcTimeLeft <= 0) { dcLocked = true; dcEnd(); }
+    }
+  }
+
+  async function dcEnd() {
+    dcRunning = false;
+    clearInterval(dcInterval);
+    finishGame("deal_chain", dcScore, "Deal Chain");
   }
 
   // =====================================================================
