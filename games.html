@@ -195,6 +195,24 @@
   }
   .cg-msg { font-size: 11.5px; color: var(--ink-faint); margin-top: 10px; min-height: 14px; }
 
+  .rl-target { font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 700; color: var(--gold); margin-bottom: 4px; }
+  .rl-current { font-family: 'IBM Plex Mono', monospace; font-size: 15px; color: var(--ink-soft); margin-bottom: 22px; }
+  .rl-inputs { display: flex; flex-direction: column; gap: 10px; max-width: 340px; margin: 0 auto 16px; }
+  .rl-input-row {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px;
+  }
+  .rl-input-label { font-size: 12px; color: var(--ink-soft); text-align: left; }
+  .rl-input-value { font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 700; color: var(--ink); min-width: 56px; text-align: center; }
+  .rl-btn-group { display: flex; gap: 6px; }
+  .rl-step-btn {
+    background: transparent; border: 1px solid var(--gold-dim); color: var(--gold);
+    width: 30px; height: 30px; border-radius: 5px; font-weight: 700; cursor: pointer; font-size: 15px; line-height: 1;
+  }
+  .rl-step-btn:hover { background: var(--gold-soft); }
+  .rl-step-btn:disabled { opacity: 0.3; cursor: default; }
+  .rl-moves { font-size: 11px; color: var(--ink-faint); margin-top: 6px; font-family: 'IBM Plex Mono', monospace; }
+
   #end-screen { display: none; text-align: center; padding: 44px 20px; }
   #end-screen .sub { text-transform: uppercase; letter-spacing: 0.1em; font-size: 11px; }
   #end-screen .final-score { font-family: 'IBM Plex Mono', monospace; font-size: 52px; font-weight: 700; margin: 10px 0; color: var(--gold); }
@@ -287,7 +305,13 @@
       <span class="g-tag">Puzzle · Logic</span>
       <div class="g-best" id="best-comp_grid">Best: —</div>
     </div>
-    <div class="game-card locked"><div class="g-index">07 / 08</div><div class="g-name">Ratio Ladder</div><div class="g-desc">One input at a time, climb to the target ratio.</div><span class="g-tag">Coming soon</span></div>
+    <div class="game-card" data-game="ratio_ladder">
+      <div class="g-index">07 / 08</div>
+      <div class="g-name">Ratio Ladder</div>
+      <div class="g-desc">Nudge margin, turnover, or leverage one step at a time to hit the target ROE exactly.</div>
+      <span class="g-tag">Puzzle · Limited Moves</span>
+      <div class="g-best" id="best-ratio_ladder">Best: —</div>
+    </div>
     <div class="game-card locked"><div class="g-index">08 / 08</div><div class="g-name">Sector Pinpoint</div><div class="g-desc">Guess the company from as few clues as possible.</div><span class="g-tag">Coming soon</span></div>
   </div>
 </div>
@@ -411,6 +435,24 @@
   </div>
 </div>
 
+<div id="play-screen-rl" style="display:none;">
+  <div class="play-head"><button class="play-back" id="back-btn-rl" type="button">&larr; Back to games</button></div>
+  <div class="hud-row">
+    <div class="stat-chip"><div class="label">Solved</div><div class="value" id="rl-score">0</div></div>
+    <div class="timer-ring">
+      <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="52"></circle><circle class="ring-fill" id="rl-ring-fill" cx="60" cy="60" r="52"></circle></svg>
+      <div class="ring-label" id="rl-time">75</div>
+    </div>
+    <div class="stat-chip"><div class="label">Best</div><div class="value best" id="rl-best">—</div></div>
+  </div>
+  <div class="question-stage compact" id="rl-question-stage">
+    <div class="rl-target">Target ROE: <span id="rl-target-val">—</span>%</div>
+    <div class="rl-current">Current ROE: <span id="rl-current-val">—</span>%</div>
+    <div class="rl-inputs" id="rl-inputs"></div>
+    <div class="rl-moves">Moves left: <span id="rl-moves-left">0</span></div>
+  </div>
+</div>
+
 <div id="end-screen">
   <div class="sub" id="end-screen-title">Mental Math Blitz</div>
   <div class="final-score" id="final-score">0</div>
@@ -465,7 +507,7 @@
     return streak;
   }
 
-  const GAME_LIST = ["mental_math_blitz", "multiple_match", "spot_the_red_flag", "statement_sprint", "deal_chain", "comp_grid"];
+  const GAME_LIST = ["mental_math_blitz", "multiple_match", "spot_the_red_flag", "statement_sprint", "deal_chain", "comp_grid", "ratio_ladder"];
 
   async function loadStreakAndBests() {
     let dates = JSON.parse(localStorage.getItem(LOCAL_DATES_KEY) || "[]");
@@ -518,7 +560,7 @@
   function pick(arr) { return arr[randInt(0, arr.length - 1)]; }
 
   function showScreen(id) {
-    ["menu-screen", "play-screen", "play-screen-mm", "play-screen-srf", "play-screen-ss", "play-screen-dc", "play-screen-cg", "end-screen"].forEach(s => {
+    ["menu-screen", "play-screen", "play-screen-mm", "play-screen-srf", "play-screen-ss", "play-screen-dc", "play-screen-cg", "play-screen-rl", "end-screen"].forEach(s => {
       document.getElementById(s).style.display = s === id ? "block" : "none";
     });
     if (id === "menu-screen") loadStreakAndBests();
@@ -535,7 +577,8 @@
     else if (currentGame === "spot_the_red_flag") startSRF();
     else if (currentGame === "statement_sprint") startSS();
     else if (currentGame === "deal_chain") startDC();
-    else startCG();
+    else if (currentGame === "comp_grid") startCG();
+    else startRL();
   });
 
   // =====================================================================
@@ -1416,6 +1459,171 @@
     cgRunning = false;
     clearInterval(cgInterval);
     finishGame("comp_grid", cgScore, "Comp Grid");
+  }
+
+  // =====================================================================
+  // GAME 7 — Ratio Ladder
+  // =====================================================================
+  const RL_BOUNDS = {
+    margin: { min: 3, max: 30 },
+    tUnits: { min: 3, max: 30 },   // real turnover = tUnits / 10
+    lUnits: { min: 4, max: 16 },   // real leverage = lUnits * 0.25
+  };
+
+  function rlClamp(v, key) { return Math.max(RL_BOUNDS[key].min, Math.min(RL_BOUNDS[key].max, v)); }
+
+  function rlComputeROE(state) {
+    const turnover = state.tUnits / 10;
+    const leverage = state.lUnits * 0.25;
+    return Math.round(state.margin * turnover * leverage * 100) / 100;
+  }
+
+  function generateRatioLadderRound() {
+    let start, target, targetState, n;
+    let attempts = 0;
+    do {
+      start = {
+        margin: randInt(6, 20),
+        tUnits: randInt(8, 25),
+        lUnits: randInt(6, 14),
+      };
+      targetState = { ...start };
+      n = randInt(3, 5);
+      for (let i = 0; i < n; i++) {
+        const key = pick(["margin", "tUnits", "lUnits"]);
+        let dir = Math.random() < 0.5 ? 1 : -1;
+        if (targetState[key] + dir < RL_BOUNDS[key].min || targetState[key] + dir > RL_BOUNDS[key].max) dir = -dir;
+        targetState[key] = rlClamp(targetState[key] + dir, key);
+      }
+      target = rlComputeROE(targetState);
+      attempts++;
+    } while (target === rlComputeROE(start) && attempts < 12);
+
+    return { state: { ...start }, target, movesUsed: 0, moveBudget: n + 2 };
+  }
+
+  const RL_TOTAL_TIME = 75;
+  let rlTimeLeft = RL_TOTAL_TIME, rlScore = 0, rlRound = null, rlInterval = null, rlRunning = false, rlLocked = false;
+
+  const rlScoreEl = document.getElementById("rl-score");
+  const rlTimeEl = document.getElementById("rl-time");
+  const rlBestEl = document.getElementById("rl-best");
+  const rlRing = document.getElementById("rl-ring-fill");
+  const rlStage = document.getElementById("rl-question-stage");
+  const rlTargetVal = document.getElementById("rl-target-val");
+  const rlCurrentVal = document.getElementById("rl-current-val");
+  const rlInputsEl = document.getElementById("rl-inputs");
+  const rlMovesLeftEl = document.getElementById("rl-moves-left");
+  rlRing.style.strokeDasharray = String(RING_CIRC);
+
+  const RL_FIELDS = [
+    { key: "margin", label: "Net Margin", fmt: v => `${v}%` },
+    { key: "tUnits", label: "Asset Turnover", fmt: v => `${(v / 10).toFixed(1)}x` },
+    { key: "lUnits", label: "Leverage", fmt: v => `${(v * 0.25).toFixed(2)}x` },
+  ];
+
+  document.querySelector('[data-game="ratio_ladder"]').addEventListener("click", startRL);
+  document.getElementById("back-btn-rl").addEventListener("click", () => { clearInterval(rlInterval); showScreen("menu-screen"); });
+
+  function startRL() {
+    currentGame = "ratio_ladder";
+    rlScore = 0; rlTimeLeft = RL_TOTAL_TIME; rlRunning = true; rlLocked = false;
+    rlScoreEl.textContent = "0";
+    rlTimeEl.textContent = String(RL_TOTAL_TIME);
+    rlRing.style.strokeDashoffset = "0";
+    rlRing.classList.remove("low");
+    const localBest = parseInt(localStorage.getItem(localBestKey("ratio_ladder")) || "0", 10);
+    rlBestEl.textContent = localBest > 0 ? String(localBest) : "—";
+    showScreen("play-screen-rl");
+    rlNextRound();
+
+    clearInterval(rlInterval);
+    rlInterval = setInterval(() => {
+      rlTimeLeft -= 1;
+      rlUpdateTimer();
+      if (rlTimeLeft <= 0) rlEnd();
+    }, 1000);
+  }
+
+  function rlUpdateTimer() {
+    const t = Math.max(0, rlTimeLeft);
+    rlTimeEl.textContent = String(t);
+    rlRing.style.strokeDashoffset = String(RING_CIRC * (1 - t / RL_TOTAL_TIME));
+    rlRing.classList.toggle("low", t <= 12);
+  }
+
+  function rlNextRound() {
+    if (!rlRunning) return;
+    rlLocked = false;
+    rlRound = generateRatioLadderRound();
+    rlTargetVal.textContent = rlRound.target.toFixed(2);
+    rlRenderInputs();
+  }
+
+  function rlRenderInputs() {
+    rlInputsEl.innerHTML = "";
+    RL_FIELDS.forEach(field => {
+      const row = document.createElement("div");
+      row.className = "rl-input-row";
+      row.innerHTML = `
+        <span class="rl-input-label">${field.label}</span>
+        <div class="rl-btn-group">
+          <button type="button" class="rl-step-btn" data-key="${field.key}" data-dir="-1">−</button>
+          <span class="rl-input-value">${field.fmt(rlRound.state[field.key])}</span>
+          <button type="button" class="rl-step-btn" data-key="${field.key}" data-dir="1">+</button>
+        </div>`;
+      rlInputsEl.appendChild(row);
+    });
+    rlInputsEl.querySelectorAll(".rl-step-btn").forEach(btn => {
+      btn.addEventListener("click", () => rlStep(btn.dataset.key, parseInt(btn.dataset.dir, 10)));
+    });
+    rlRefreshDisplay();
+  }
+
+  function rlRefreshDisplay() {
+    rlCurrentVal.textContent = rlComputeROE(rlRound.state).toFixed(2);
+    rlMovesLeftEl.textContent = String(rlRound.moveBudget - rlRound.movesUsed);
+    RL_FIELDS.forEach(field => {
+      const valEl = rlInputsEl.querySelector(`[data-key="${field.key}"]`).parentElement.querySelector(".rl-input-value");
+      valEl.textContent = field.fmt(rlRound.state[field.key]);
+    });
+  }
+
+  function rlStep(key, dir) {
+    if (!rlRunning || rlLocked) return;
+    const newVal = rlClamp(rlRound.state[key] + dir, key);
+    if (newVal === rlRound.state[key]) return; // at boundary — no move consumed
+    rlRound.state[key] = newVal;
+    rlRound.movesUsed += 1;
+    rlRefreshDisplay();
+
+    const current = rlComputeROE(rlRound.state);
+    if (current === rlRound.target) {
+      rlLocked = true;
+      rlScore += 1;
+      rlScoreEl.textContent = String(rlScore);
+      pulse(rlScoreEl);
+      flashStage(rlStage, "flash-correct");
+      setTimeout(() => {
+        if (rlTimeLeft <= 0) { rlEnd(); return; }
+        rlNextRound();
+      }, 700);
+    } else if (rlRound.movesUsed >= rlRound.moveBudget) {
+      rlLocked = true;
+      rlTimeLeft = Math.max(0, rlTimeLeft - 5);
+      rlUpdateTimer();
+      flashStage(rlStage, "flash-wrong");
+      setTimeout(() => {
+        if (rlTimeLeft <= 0) { rlEnd(); return; }
+        rlNextRound();
+      }, 700);
+    }
+  }
+
+  async function rlEnd() {
+    rlRunning = false;
+    clearInterval(rlInterval);
+    finishGame("ratio_ladder", rlScore, "Ratio Ladder");
   }
 
   // =====================================================================
