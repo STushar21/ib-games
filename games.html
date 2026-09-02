@@ -213,6 +213,28 @@
   .rl-step-btn:disabled { opacity: 0.3; cursor: default; }
   .rl-moves { font-size: 11px; color: var(--ink-faint); margin-top: 6px; font-family: 'IBM Plex Mono', monospace; }
 
+  .sp-clue-list { text-align: left; max-width: 400px; margin: 0 auto 16px; list-style: none; padding: 0; }
+  .sp-clue-list li {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 5px;
+    padding: 10px 14px; margin-bottom: 6px; font-size: 12.5px; color: var(--ink-soft);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .sp-guess-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; max-width: 420px; margin: 0 auto 14px; }
+  .sp-guess-btn {
+    background: transparent; border: 1px solid var(--gold-dim); color: var(--gold);
+    padding: 11px 10px; border-radius: 5px; font-weight: 700; letter-spacing: 0.02em;
+    cursor: pointer; font-size: 11.5px;
+  }
+  .sp-guess-btn:hover { background: var(--gold-soft); }
+  .sp-guess-btn.correct-flag { border-color: var(--green); color: var(--green); background: var(--green-soft); }
+  .sp-guess-btn.wrong-flag { border-color: var(--red); color: var(--red); background: var(--red-soft); }
+  .sp-reveal-btn {
+    background: transparent; border: 1px solid var(--border); color: var(--ink-soft);
+    padding: 10px 20px; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer;
+  }
+  .sp-reveal-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
+  .sp-reveal-btn:disabled { opacity: 0.3; cursor: default; }
+
   #end-screen { display: none; text-align: center; padding: 44px 20px; }
   #end-screen .sub { text-transform: uppercase; letter-spacing: 0.1em; font-size: 11px; }
   #end-screen .final-score { font-family: 'IBM Plex Mono', monospace; font-size: 52px; font-weight: 700; margin: 10px 0; color: var(--gold); }
@@ -312,7 +334,13 @@
       <span class="g-tag">Puzzle · Limited Moves</span>
       <div class="g-best" id="best-ratio_ladder">Best: —</div>
     </div>
-    <div class="game-card locked"><div class="g-index">08 / 08</div><div class="g-name">Sector Pinpoint</div><div class="g-desc">Guess the company from as few clues as possible.</div><span class="g-tag">Coming soon</span></div>
+    <div class="game-card" data-game="sector_pinpoint">
+      <div class="g-index">08 / 08</div>
+      <div class="g-name">Sector Pinpoint</div>
+      <div class="g-desc">Clues reveal one at a time. Guess the sector early for more points — or play it safe.</div>
+      <span class="g-tag">Puzzle · Push Your Luck</span>
+      <div class="g-best" id="best-sector_pinpoint">Best: —</div>
+    </div>
   </div>
 </div>
 
@@ -453,6 +481,26 @@
   </div>
 </div>
 
+<div id="play-screen-sp" style="display:none;">
+  <div class="play-head"><button class="play-back" id="back-btn-sp" type="button">&larr; Back to games</button></div>
+  <div class="hud-row">
+    <div class="stat-chip"><div class="label">Score</div><div class="value" id="sp-score">0</div></div>
+    <div class="timer-ring">
+      <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="52"></circle><circle class="ring-fill" id="sp-ring-fill" cx="60" cy="60" r="52"></circle></svg>
+      <div class="ring-label" id="sp-time">75</div>
+    </div>
+    <div class="stat-chip"><div class="label">Best</div><div class="value best" id="sp-best">—</div></div>
+  </div>
+  <div class="qtimer-track"><div class="qtimer-fill" id="sp-qtimer"></div></div>
+  <div class="question-stage compact" id="sp-question-stage">
+    <div class="q-text">Guess the sector</div>
+    <div class="q-subtext" id="sp-clue-count">Clue 1 of 4 · worth 4 pts</div>
+    <ul class="sp-clue-list" id="sp-clue-list"></ul>
+    <div class="sp-guess-grid" id="sp-guess-grid"></div>
+    <button type="button" class="sp-reveal-btn" id="sp-reveal-btn">Reveal next clue →</button>
+  </div>
+</div>
+
 <div id="end-screen">
   <div class="sub" id="end-screen-title">Mental Math Blitz</div>
   <div class="final-score" id="final-score">0</div>
@@ -507,7 +555,7 @@
     return streak;
   }
 
-  const GAME_LIST = ["mental_math_blitz", "multiple_match", "spot_the_red_flag", "statement_sprint", "deal_chain", "comp_grid", "ratio_ladder"];
+  const GAME_LIST = ["mental_math_blitz", "multiple_match", "spot_the_red_flag", "statement_sprint", "deal_chain", "comp_grid", "ratio_ladder", "sector_pinpoint"];
 
   async function loadStreakAndBests() {
     let dates = JSON.parse(localStorage.getItem(LOCAL_DATES_KEY) || "[]");
@@ -560,7 +608,7 @@
   function pick(arr) { return arr[randInt(0, arr.length - 1)]; }
 
   function showScreen(id) {
-    ["menu-screen", "play-screen", "play-screen-mm", "play-screen-srf", "play-screen-ss", "play-screen-dc", "play-screen-cg", "play-screen-rl", "end-screen"].forEach(s => {
+    ["menu-screen", "play-screen", "play-screen-mm", "play-screen-srf", "play-screen-ss", "play-screen-dc", "play-screen-cg", "play-screen-rl", "play-screen-sp", "end-screen"].forEach(s => {
       document.getElementById(s).style.display = s === id ? "block" : "none";
     });
     if (id === "menu-screen") loadStreakAndBests();
@@ -578,7 +626,8 @@
     else if (currentGame === "statement_sprint") startSS();
     else if (currentGame === "deal_chain") startDC();
     else if (currentGame === "comp_grid") startCG();
-    else startRL();
+    else if (currentGame === "ratio_ladder") startRL();
+    else startSP();
   });
 
   // =====================================================================
@@ -1624,6 +1673,180 @@
     rlRunning = false;
     clearInterval(rlInterval);
     finishGame("ratio_ladder", rlScore, "Ratio Ladder");
+  }
+
+  // =====================================================================
+  // GAME 8 — Sector Pinpoint
+  // =====================================================================
+  const SECTOR_PROFILES = [
+    { name: "SaaS / Software", growth: [15, 40], margin: [15, 35], geo: "Global, cloud-delivered", headline: "Recently emphasized net revenue retention above 110%" },
+    { name: "Grocery Retail", growth: [2, 5], margin: [3, 6], geo: "Dense network of physical stores, single country", headline: "Recently highlighted thin margins amid price competition" },
+    { name: "Consumer Retail", growth: [3, 8], margin: [8, 14], geo: "Multi-region store footprint plus e-commerce", headline: "Recently discussed inventory management ahead of the holidays" },
+    { name: "Industrials", growth: [3, 7], margin: [12, 18], geo: "Manufacturing footprint across multiple countries", headline: "Recently cited backlog growth in its order book" },
+    { name: "Healthcare / Pharma", growth: [5, 12], margin: [20, 30], geo: "Global sales, R&D concentrated in a few hubs", headline: "Recently discussed its late-stage clinical pipeline" },
+    { name: "Energy (Oil & Gas)", growth: [-5, 10], margin: [15, 25], geo: "Upstream operations concentrated in a few basins", headline: "Recently cited commodity price volatility as a swing factor" },
+    { name: "Telecom", growth: [1, 4], margin: [25, 35], geo: "National network infrastructure, single country", headline: "Recently discussed capital spending on network upgrades" },
+    { name: "Media", growth: [0, 6], margin: [10, 20], geo: "Content distributed across multiple regions", headline: "Recently cited a shift in advertising spend" },
+    { name: "Real Estate (REIT)", growth: [2, 6], margin: [40, 55], geo: "Property portfolio concentrated in a few markets", headline: "Recently discussed occupancy rates across its portfolio" },
+    { name: "Automotive", growth: [1, 5], margin: [5, 10], geo: "Manufacturing plants across multiple countries", headline: "Recently cited supply chain constraints on production" },
+    { name: "Luxury Goods", growth: [5, 15], margin: [20, 30], geo: "Flagship stores concentrated in major global cities", headline: "Recently highlighted strong demand in Asia" },
+    { name: "Semiconductors", growth: [5, 25], margin: [25, 40], geo: "Design global, manufacturing concentrated in a few countries", headline: "Recently discussed capacity expansion to meet demand" },
+  ];
+  const SP_POINTS_BY_STAGE = [4, 3, 2, 1];
+
+  function generateSectorPinpointRound() {
+    const correct = pick(SECTOR_PROFILES);
+    const growthVal = randInt(correct.growth[0], correct.growth[1]);
+    const marginVal = randInt(correct.margin[0], correct.margin[1]);
+    const clues = [
+      `Revenue growth: ${growthVal}% YoY`,
+      `EBITDA margin: ${marginVal}%`,
+      correct.geo,
+      correct.headline,
+    ];
+    const distractors = shuffleArr(SECTOR_PROFILES.filter(s => s.name !== correct.name)).slice(0, 5).map(s => s.name);
+    const options = shuffleArr([correct.name, ...distractors]);
+    return { correctName: correct.name, clues, revealed: 1, options };
+  }
+
+  const SP_TOTAL_TIME = 75;
+  const SP_STAGE_MS = 8000;
+  let spTimeLeft = SP_TOTAL_TIME, spScore = 0, spRound = null, spInterval = null, spStageTimeout = null, spRunning = false, spLocked = false;
+
+  const spScoreEl = document.getElementById("sp-score");
+  const spTimeEl = document.getElementById("sp-time");
+  const spBestEl = document.getElementById("sp-best");
+  const spRing = document.getElementById("sp-ring-fill");
+  const spQTimerBar = document.getElementById("sp-qtimer");
+  const spClueCount = document.getElementById("sp-clue-count");
+  const spClueList = document.getElementById("sp-clue-list");
+  const spGuessGrid = document.getElementById("sp-guess-grid");
+  const spRevealBtn = document.getElementById("sp-reveal-btn");
+  const spStage = document.getElementById("sp-question-stage");
+  spRing.style.strokeDasharray = String(RING_CIRC);
+
+  document.querySelector('[data-game="sector_pinpoint"]').addEventListener("click", startSP);
+  document.getElementById("back-btn-sp").addEventListener("click", () => { clearTimeout(spStageTimeout); clearInterval(spInterval); showScreen("menu-screen"); });
+  spRevealBtn.addEventListener("click", () => spReveal());
+
+  function startSP() {
+    currentGame = "sector_pinpoint";
+    spScore = 0; spTimeLeft = SP_TOTAL_TIME; spRunning = true; spLocked = false;
+    spScoreEl.textContent = "0";
+    spTimeEl.textContent = String(SP_TOTAL_TIME);
+    spRing.style.strokeDashoffset = "0";
+    spRing.classList.remove("low");
+    const localBest = parseInt(localStorage.getItem(localBestKey("sector_pinpoint")) || "0", 10);
+    spBestEl.textContent = localBest > 0 ? String(localBest) : "—";
+    showScreen("play-screen-sp");
+    spNextRound();
+
+    clearInterval(spInterval);
+    spInterval = setInterval(() => {
+      spTimeLeft -= 1;
+      spUpdateSessionTimer();
+      if (spTimeLeft <= 0) spEnd();
+    }, 1000);
+  }
+
+  function spUpdateSessionTimer() {
+    const t = Math.max(0, spTimeLeft);
+    spTimeEl.textContent = String(t);
+    spRing.style.strokeDashoffset = String(RING_CIRC * (1 - t / SP_TOTAL_TIME));
+    spRing.classList.toggle("low", t <= 12);
+  }
+
+  function spNextRound() {
+    if (!spRunning) return;
+    spLocked = false;
+    spRound = generateSectorPinpointRound();
+    spRenderRound();
+    spStartStageTimer();
+  }
+
+  function spRenderRound() {
+    spClueCount.textContent = `Clue ${spRound.revealed} of 4 · worth ${SP_POINTS_BY_STAGE[spRound.revealed - 1]} pts`;
+    spClueList.innerHTML = "";
+    for (let i = 0; i < spRound.revealed; i++) {
+      const li = document.createElement("li");
+      li.textContent = spRound.clues[i];
+      spClueList.appendChild(li);
+    }
+    spGuessGrid.innerHTML = "";
+    spRound.options.forEach(name => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "sp-guess-btn";
+      btn.textContent = name;
+      btn.addEventListener("click", () => spGuess(name, btn));
+      spGuessGrid.appendChild(btn);
+    });
+    spRevealBtn.disabled = spRound.revealed >= 4;
+  }
+
+  function spStartStageTimer() {
+    spQTimerBar.style.transition = "none";
+    spQTimerBar.style.width = "100%";
+    spQTimerBar.classList.remove("low");
+    void spQTimerBar.offsetWidth;
+    spQTimerBar.style.transition = `width ${SP_STAGE_MS}ms linear`;
+    spQTimerBar.style.width = "0%";
+    setTimeout(() => spQTimerBar.classList.add("low"), SP_STAGE_MS * 0.6);
+
+    clearTimeout(spStageTimeout);
+    spStageTimeout = setTimeout(() => {
+      if (spRound.revealed < 4) spReveal();
+      else spResolveRound(false, null); // out of time on the last clue — treated as a miss
+    }, SP_STAGE_MS);
+  }
+
+  function spReveal() {
+    if (!spRunning || spLocked || spRound.revealed >= 4) return;
+    clearTimeout(spStageTimeout);
+    spRound.revealed += 1;
+    spRenderRound();
+    spStartStageTimer();
+  }
+
+  function spGuess(name, btnEl) {
+    if (!spRunning || spLocked) return;
+    spLocked = true;
+    clearTimeout(spStageTimeout);
+    const correct = name === spRound.correctName;
+    spResolveRound(correct, btnEl);
+  }
+
+  function spResolveRound(correct, btnEl) {
+    spLocked = true;
+    const buttons = spGuessGrid.querySelectorAll(".sp-guess-btn");
+    buttons.forEach(b => {
+      if (b.textContent === spRound.correctName) b.classList.add("correct-flag");
+      else if (b === btnEl) b.classList.add("wrong-flag");
+    });
+
+    if (correct) {
+      const pts = SP_POINTS_BY_STAGE[spRound.revealed - 1];
+      spScore += pts;
+      spScoreEl.textContent = String(spScore);
+      pulse(spScoreEl);
+      flashStage(spStage, "flash-correct");
+    } else {
+      spTimeLeft = Math.max(0, spTimeLeft - 3);
+      spUpdateSessionTimer();
+      flashStage(spStage, "flash-wrong");
+    }
+
+    setTimeout(() => {
+      if (spTimeLeft <= 0) { spEnd(); return; }
+      spNextRound();
+    }, 900);
+  }
+
+  async function spEnd() {
+    spRunning = false;
+    clearInterval(spInterval);
+    clearTimeout(spStageTimeout);
+    finishGame("sector_pinpoint", spScore, "Sector Pinpoint");
   }
 
   // =====================================================================
