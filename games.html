@@ -25,6 +25,8 @@
     --green-soft: rgba(52,167,118,0.12);
     --red: #C4544A;
     --red-soft: rgba(196,84,74,0.14);
+    --steel: #6C8CAE;
+    --steel-soft: rgba(108,140,174,0.12);
   }
   * { box-sizing: border-box; }
   body {
@@ -172,6 +174,27 @@
   .dc-cell.dc-wrong { border-color: var(--red); background: var(--red-soft); }
   .dc-line { stroke: var(--gold); stroke-width: 2.5; }
 
+  .cg-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; max-width: 420px; margin: 0 auto 18px; }
+  .cg-cell {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+    padding: 10px 6px; min-height: 64px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 5px; cursor: pointer;
+    transition: border-color 0.12s ease, background 0.12s ease;
+  }
+  .cg-cell:hover { border-color: var(--gold-dim); }
+  .cg-cell .cg-name { font-size: 9.5px; color: var(--ink-faint); line-height: 1.25; }
+  .cg-cell .cg-state { font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; color: var(--ink-faint); }
+  .cg-cell.cg-growth { border-color: var(--gold-dim); background: var(--gold-soft); }
+  .cg-cell.cg-growth .cg-state { color: var(--gold); }
+  .cg-cell.cg-value { border-color: var(--steel); background: var(--steel-soft); }
+  .cg-cell.cg-value .cg-state { color: var(--steel); }
+  .cg-cell.cg-invalid { border-color: var(--red) !important; background: var(--red-soft) !important; }
+  .cg-check-btn {
+    background: var(--gold); color: #14100A; border: none; border-radius: 5px;
+    padding: 12px 26px; font-weight: 700; cursor: pointer; font-size: 13px; letter-spacing: 0.04em;
+  }
+  .cg-msg { font-size: 11.5px; color: var(--ink-faint); margin-top: 10px; min-height: 14px; }
+
   #end-screen { display: none; text-align: center; padding: 44px 20px; }
   #end-screen .sub { text-transform: uppercase; letter-spacing: 0.1em; font-size: 11px; }
   #end-screen .final-score { font-family: 'IBM Plex Mono', monospace; font-size: 52px; font-weight: 700; margin: 10px 0; color: var(--gold); }
@@ -257,7 +280,13 @@
       <span class="g-tag">Puzzle · Sequence</span>
       <div class="g-best" id="best-deal_chain">Best: —</div>
     </div>
-    <div class="game-card locked"><div class="g-index">06 / 08</div><div class="g-name">Comp Grid</div><div class="g-desc">Place companies so every row and column checks out.</div><span class="g-tag">Coming soon</span></div>
+    <div class="game-card" data-game="comp_grid">
+      <div class="g-index">06 / 08</div>
+      <div class="g-name">Comp Grid</div>
+      <div class="g-desc">Classify each company Growth or Value so every row and column balances out.</div>
+      <span class="g-tag">Puzzle · Logic</span>
+      <div class="g-best" id="best-comp_grid">Best: —</div>
+    </div>
     <div class="game-card locked"><div class="g-index">07 / 08</div><div class="g-name">Ratio Ladder</div><div class="g-desc">One input at a time, climb to the target ratio.</div><span class="g-tag">Coming soon</span></div>
     <div class="game-card locked"><div class="g-index">08 / 08</div><div class="g-name">Sector Pinpoint</div><div class="g-desc">Guess the company from as few clues as possible.</div><span class="g-tag">Coming soon</span></div>
   </div>
@@ -363,6 +392,25 @@
   </div>
 </div>
 
+<div id="play-screen-cg" style="display:none;">
+  <div class="play-head"><button class="play-back" id="back-btn-cg" type="button">&larr; Back to games</button></div>
+  <div class="hud-row">
+    <div class="stat-chip"><div class="label">Solved</div><div class="value" id="cg-score">0</div></div>
+    <div class="timer-ring">
+      <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="52"></circle><circle class="ring-fill" id="cg-ring-fill" cx="60" cy="60" r="52"></circle></svg>
+      <div class="ring-label" id="cg-time">90</div>
+    </div>
+    <div class="stat-chip"><div class="label">Best</div><div class="value best" id="cg-best">—</div></div>
+  </div>
+  <div class="question-stage compact" id="cg-question-stage">
+    <div class="q-text">Every row and column: 2 Growth, 2 Value</div>
+    <div class="q-subtext">no three of the same type in a row</div>
+    <div class="cg-grid" id="cg-grid"></div>
+    <button type="button" class="cg-check-btn" id="cg-check-btn">Check grid</button>
+    <div class="cg-msg" id="cg-msg"></div>
+  </div>
+</div>
+
 <div id="end-screen">
   <div class="sub" id="end-screen-title">Mental Math Blitz</div>
   <div class="final-score" id="final-score">0</div>
@@ -417,7 +465,7 @@
     return streak;
   }
 
-  const GAME_LIST = ["mental_math_blitz", "multiple_match", "spot_the_red_flag", "statement_sprint", "deal_chain"];
+  const GAME_LIST = ["mental_math_blitz", "multiple_match", "spot_the_red_flag", "statement_sprint", "deal_chain", "comp_grid"];
 
   async function loadStreakAndBests() {
     let dates = JSON.parse(localStorage.getItem(LOCAL_DATES_KEY) || "[]");
@@ -470,7 +518,7 @@
   function pick(arr) { return arr[randInt(0, arr.length - 1)]; }
 
   function showScreen(id) {
-    ["menu-screen", "play-screen", "play-screen-mm", "play-screen-srf", "play-screen-ss", "play-screen-dc", "end-screen"].forEach(s => {
+    ["menu-screen", "play-screen", "play-screen-mm", "play-screen-srf", "play-screen-ss", "play-screen-dc", "play-screen-cg", "end-screen"].forEach(s => {
       document.getElementById(s).style.display = s === id ? "block" : "none";
     });
     if (id === "menu-screen") loadStreakAndBests();
@@ -486,7 +534,8 @@
     else if (currentGame === "multiple_match") startMM();
     else if (currentGame === "spot_the_red_flag") startSRF();
     else if (currentGame === "statement_sprint") startSS();
-    else startDC();
+    else if (currentGame === "deal_chain") startDC();
+    else startCG();
   });
 
   // =====================================================================
@@ -1205,6 +1254,168 @@
     dcRunning = false;
     clearInterval(dcInterval);
     finishGame("deal_chain", dcScore, "Deal Chain");
+  }
+
+  // =====================================================================
+  // GAME 6 — Comp Grid
+  // =====================================================================
+  const COMPANY_NAMES = [
+    "Nova Cloud", "BrightPath Retail", "Solstice Energy", "Ironclad Industrials",
+    "Vertex Health", "Meridian Media", "Falcon Semiconductors", "Harborview REIT",
+    "Crestline Auto", "Lumen Telecom", "Aurora Luxury", "Granite Grocers",
+    "Pinecrest Pharma", "Zenith Bank", "Comet Logistics", "Anchor Insurance",
+    "Bluepeak Software", "Redwood Realty", "Silverline Foods", "Northgate Airlines",
+    "Cobalt Mining", "Willowmere Apparel", "Driftwood Hospitality", "Ember Robotics",
+  ];
+
+  function generateCompGridRound() {
+    const names = shuffleArr(COMPANY_NAMES).slice(0, 16);
+    return { names, state: new Array(16).fill(null) };
+  }
+
+  function hasThreeConsecutiveSame(seq) {
+    for (let i = 0; i <= seq.length - 3; i++) {
+      if (seq[i] !== null && seq[i] === seq[i + 1] && seq[i + 1] === seq[i + 2]) return true;
+    }
+    return false;
+  }
+
+  function cgRowIndices(r) { return [r * 4, r * 4 + 1, r * 4 + 2, r * 4 + 3]; }
+  function cgColIndices(c) { return [c, c + 4, c + 8, c + 12]; }
+
+  function cgLineValid(indices, state) {
+    const seq = indices.map(i => state[i]);
+    if (seq.some(v => v === null)) return null; // incomplete — not judged yet
+    const g = seq.filter(v => v === "G").length;
+    const v = seq.filter(v => v === "V").length;
+    return g === 2 && v === 2 && !hasThreeConsecutiveSame(seq);
+  }
+
+  const CG_TOTAL_TIME = 90;
+  let cgTimeLeft = CG_TOTAL_TIME, cgScore = 0, cgRound = null, cgInterval = null, cgRunning = false;
+
+  const cgScoreEl = document.getElementById("cg-score");
+  const cgTimeEl = document.getElementById("cg-time");
+  const cgBestEl = document.getElementById("cg-best");
+  const cgRing = document.getElementById("cg-ring-fill");
+  const cgGrid = document.getElementById("cg-grid");
+  const cgStage = document.getElementById("cg-question-stage");
+  const cgMsg = document.getElementById("cg-msg");
+  cgRing.style.strokeDasharray = String(RING_CIRC);
+
+  document.querySelector('[data-game="comp_grid"]').addEventListener("click", startCG);
+  document.getElementById("back-btn-cg").addEventListener("click", () => { clearInterval(cgInterval); showScreen("menu-screen"); });
+
+  function startCG() {
+    currentGame = "comp_grid";
+    cgScore = 0; cgTimeLeft = CG_TOTAL_TIME; cgRunning = true;
+    cgScoreEl.textContent = "0";
+    cgTimeEl.textContent = String(CG_TOTAL_TIME);
+    cgRing.style.strokeDashoffset = "0";
+    cgRing.classList.remove("low");
+    const localBest = parseInt(localStorage.getItem(localBestKey("comp_grid")) || "0", 10);
+    cgBestEl.textContent = localBest > 0 ? String(localBest) : "—";
+    showScreen("play-screen-cg");
+    cgNextRound();
+
+    clearInterval(cgInterval);
+    cgInterval = setInterval(() => {
+      cgTimeLeft -= 1;
+      cgUpdateTimer();
+      if (cgTimeLeft <= 0) cgEnd();
+    }, 1000);
+  }
+
+  function cgUpdateTimer() {
+    const t = Math.max(0, cgTimeLeft);
+    cgTimeEl.textContent = String(t);
+    cgRing.style.strokeDashoffset = String(RING_CIRC * (1 - t / CG_TOTAL_TIME));
+    cgRing.classList.toggle("low", t <= 12);
+  }
+
+  function cgNextRound() {
+    if (!cgRunning) return;
+    cgRound = generateCompGridRound();
+    cgMsg.textContent = "";
+    cgRenderGrid();
+  }
+
+  function cgRenderGrid() {
+    cgGrid.innerHTML = "";
+    cgRound.names.forEach((name, i) => {
+      const cell = document.createElement("div");
+      cell.className = "cg-cell";
+      cell.dataset.index = i;
+      cgApplyCellClasses(cell, i);
+      cell.innerHTML = `<span class="cg-name">${name}</span><span class="cg-state">${cgStateLabel(cgRound.state[i])}</span>`;
+      cell.addEventListener("click", () => cgCellClick(i));
+      cgGrid.appendChild(cell);
+    });
+  }
+
+  function cgStateLabel(s) { return s === "G" ? "GROWTH" : s === "V" ? "VALUE" : "—"; }
+
+  function cgApplyCellClasses(cell, i) {
+    cell.classList.remove("cg-growth", "cg-value", "cg-invalid");
+    const s = cgRound.state[i];
+    if (s === "G") cell.classList.add("cg-growth");
+    if (s === "V") cell.classList.add("cg-value");
+  }
+
+  function cgCellClick(i) {
+    if (!cgRunning) return;
+    const s = cgRound.state[i];
+    cgRound.state[i] = s === null ? "G" : s === "G" ? "V" : null;
+    const cell = cgGrid.querySelector(`[data-index="${i}"]`);
+    cgApplyCellClasses(cell, i);
+    cell.querySelector(".cg-state").textContent = cgStateLabel(cgRound.state[i]);
+  }
+
+  function cgCheck() {
+    if (!cgRunning) return;
+    if (cgRound.state.some(v => v === null)) {
+      cgMsg.textContent = "Fill every cell first.";
+      return;
+    }
+
+    let allValid = true;
+    const invalidIndices = new Set();
+    for (let r = 0; r < 4; r++) {
+      const idx = cgRowIndices(r);
+      if (cgLineValid(idx, cgRound.state) === false) { allValid = false; idx.forEach(i => invalidIndices.add(i)); }
+    }
+    for (let c = 0; c < 4; c++) {
+      const idx = cgColIndices(c);
+      if (cgLineValid(idx, cgRound.state) === false) { allValid = false; idx.forEach(i => invalidIndices.add(i)); }
+    }
+
+    if (allValid) {
+      cgScore += 1;
+      cgScoreEl.textContent = String(cgScore);
+      pulse(cgScoreEl);
+      flashStage(cgStage, "flash-correct");
+      cgMsg.textContent = "Balanced — nice work.";
+      setTimeout(() => {
+        if (cgTimeLeft <= 0) { cgEnd(); return; }
+        cgNextRound();
+      }, 700);
+    } else {
+      invalidIndices.forEach(i => cgGrid.querySelector(`[data-index="${i}"]`).classList.add("cg-invalid"));
+      setTimeout(() => invalidIndices.forEach(i => cgGrid.querySelector(`[data-index="${i}"]`)?.classList.remove("cg-invalid")), 700);
+      cgTimeLeft = Math.max(0, cgTimeLeft - 4);
+      cgUpdateTimer();
+      flashStage(cgStage, "flash-wrong");
+      cgMsg.textContent = "Some rows or columns are off — check the highlighted cells.";
+      if (cgTimeLeft <= 0) cgEnd();
+    }
+  }
+
+  document.getElementById("cg-check-btn").addEventListener("click", cgCheck);
+
+  async function cgEnd() {
+    cgRunning = false;
+    clearInterval(cgInterval);
+    finishGame("comp_grid", cgScore, "Comp Grid");
   }
 
   // =====================================================================
