@@ -84,6 +84,13 @@
     font-size: 12px; color: var(--ink-faint); text-align: center; padding: 30px 20px;
     border: 1px dashed var(--border); border-radius: 8px; display: none;
   }
+  .archive-date-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  .archive-date-btn {
+    background: var(--surface); border: 1px solid var(--border); color: var(--ink-soft);
+    font-size: 11.5px; font-weight: 600; padding: 7px 14px; border-radius: 6px; cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .archive-date-btn.active { background: var(--gold-soft); color: var(--gold); border-color: var(--gold-dim); }
 
   .loading-note, .error-note {
     font-size: 12.5px; text-align: center; padding: 24px 20px;
@@ -115,11 +122,6 @@
   }
   .news-read-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
   .news-read-btn.is-read { border-color: var(--green); color: var(--green); background: var(--green-soft); }
-
-  .placeholder-banner {
-    font-size: 11.5px; color: var(--ink-faint); text-align: center; padding: 10px;
-    border: 1px dashed var(--border); border-radius: 6px; margin-bottom: 18px;
-  }
 </style>
 </head>
 <body>
@@ -154,8 +156,6 @@
 </div>
 <div class="sub">Markets, deals, and macro — a few minutes a day.</div>
 
-<div class="placeholder-banner">Live generation — not yet cached, so every load/regenerate is a real (paid) API call. Storage comes next.</div>
-
 <div class="tab-row">
   <button type="button" class="active" id="tab-today">Today</button>
   <button type="button" id="tab-archive">Archive</button>
@@ -163,7 +163,13 @@
 </div>
 
 <div id="today-view"></div>
-<div class="archive-note" id="archive-note">Archive will appear here once briefs are actually being stored — nothing to show yet.</div>
+
+<div id="archive-view" style="display:none;">
+  <div class="archive-date-list" id="archive-date-list"></div>
+  <div id="archive-content"></div>
+  <div class="archive-note" id="archive-note">Archive will appear here once more than one day's brief has been generated — nothing to show yet.</div>
+</div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -176,7 +182,7 @@
   sb.auth.onAuthStateChange((event, session) => {
     document.getElementById("login-gate").style.display = session ? "none" : "block";
     document.getElementById("app-content").style.display = session ? "block" : "none";
-    if (session) loadBrief();
+    if (session) loadToday();
   });
 
   document.getElementById("login-btn").addEventListener("click", async () => {
@@ -190,94 +196,151 @@
   document.getElementById("login-password").addEventListener("keydown", (e) => { if (e.key === "Enter") document.getElementById("login-btn").click(); });
   document.getElementById("logout-btn").addEventListener("click", async () => { await sb.auth.signOut(); });
 
+  function todayStr() { return new Date().toISOString().slice(0, 10); }
   document.getElementById("brief-date").textContent = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
 
   const todayView = document.getElementById("today-view");
+  const archiveView = document.getElementById("archive-view");
+  const archiveDateList = document.getElementById("archive-date-list");
+  const archiveContent = document.getElementById("archive-content");
+  const archiveNote = document.getElementById("archive-note");
   const CAT_CLASS = { Markets: "markets", Deals: "deals", Macro: "macro" };
 
-  function renderItems(items) {
-    todayView.innerHTML = "";
-    items.forEach((item, i) => {
-      const card = document.createElement("div");
-      card.className = "news-card";
-      card.dataset.id = i;
-      const catClass = CAT_CLASS[item.category] || "markets";
-      card.innerHTML = `
+  function loadingHtml(msg) { return `<div class="loading-note">${msg}</div>`; }
+  function errorHtml(message) {
+    return `<div class="error-note">${message}<br><button type="button" class="news-read-btn" data-retry="1">Try again</button></div>`;
+  }
+
+  async function getReadIds(userId, ids) {
+    if (!userId || !ids.length) return new Set();
+    const { data, error } = await sb.from("news_read_status").select("news_item_id").eq("user_id", userId).in("news_item_id", ids);
+    if (error) { console.warn("Couldn't load read status:", error.message); return new Set(); }
+    return new Set(data.map(r => r.news_item_id));
+  }
+
+  function cardHtml(item, isRead) {
+    const catClass = CAT_CLASS[item.category] || "markets";
+    return `
+      <div class="news-card ${isRead ? "is-read" : ""}" data-item-id="${item.id}">
         <span class="news-cat ${catClass}">${item.category}</span>
         <div class="news-headline">${item.headline}</div>
         <div class="news-summary">${item.summary}</div>
         ${item.why_it_matters ? `<div class="news-why">Why it matters for interviews: ${item.why_it_matters}</div>` : ""}
-        <div class="news-footer"><button type="button" class="news-read-btn" data-read="${i}">Mark as read</button></div>
-      `;
-      todayView.appendChild(card);
-    });
+        <div class="news-footer"><button type="button" class="news-read-btn ${isRead ? "is-read" : ""}" data-item-id="${item.id}">${isRead ? "Read ✓" : "Mark as read"}</button></div>
+      </div>`;
+  }
 
-    // Mark-as-read is still purely local/visual — per-user persistence
-    // (news_read_status table) is a later step, not part of this wiring.
-    todayView.querySelectorAll(".news-read-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
+  async function renderItemsInto(container, items) {
+    const { data: userData } = await sb.auth.getUser();
+    const userId = userData?.user?.id;
+    const ids = items.map(i => i.id);
+    const readIds = await getReadIds(userId, ids);
+
+    container.innerHTML = items.map(item => cardHtml(item, readIds.has(item.id))).join("");
+
+    container.querySelectorAll(".news-read-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const itemId = parseInt(btn.dataset.itemId, 10);
         const card = btn.closest(".news-card");
-        const isRead = btn.classList.toggle("is-read");
-        card.classList.toggle("is-read", isRead);
-        btn.textContent = isRead ? "Read ✓" : "Mark as read";
+        const isCurrentlyRead = btn.classList.contains("is-read");
+        const { data: ud } = await sb.auth.getUser();
+        const uid = ud?.user?.id;
+        if (!uid) return;
+
+        if (isCurrentlyRead) {
+          await sb.from("news_read_status").delete().eq("user_id", uid).eq("news_item_id", itemId);
+          btn.classList.remove("is-read"); card.classList.remove("is-read"); btn.textContent = "Mark as read";
+        } else {
+          await sb.from("news_read_status").insert([{ user_id: uid, news_item_id: itemId }]);
+          btn.classList.add("is-read"); card.classList.add("is-read"); btn.textContent = "Read ✓";
+        }
       });
     });
   }
 
-  function renderLoading() {
-    todayView.innerHTML = `<div class="loading-note">Generating today's brief — searching for recent news, this can take up to a minute...</div>`;
-  }
-
-  function renderError(message) {
-    todayView.innerHTML = `
-      <div class="error-note">
-        Couldn't generate the brief: ${message}
-        <br><button type="button" id="retry-btn" class="news-read-btn">Try again</button>
-      </div>`;
-    document.getElementById("retry-btn").addEventListener("click", loadBrief);
-  }
-
-  async function loadBrief() {
-    renderLoading();
-    const { data, error } = await sb.functions.invoke("generate-news-brief", { body: {} });
+  async function loadToday(force) {
+    todayView.innerHTML = loadingHtml(force ? "Regenerating today's brief — this can take up to a minute..." : "Loading today's brief...");
+    const { data, error } = await sb.functions.invoke("generate-news-brief", { body: { force: !!force } });
 
     if (error) {
       let message = error.message;
       if (error.context && typeof error.context.json === "function") {
         try {
           const body = await error.context.json();
-          if (body?.error) message = body.error;
-        } catch (parseErr) {
-          // fall back to the generic message
-        }
+          if (body?.error) message = body.error + (body.raw ? `\n\nRaw response:\n${body.raw}` : "");
+        } catch (_e) {}
       }
-      renderError(message);
+      todayView.innerHTML = errorHtml(message);
+      todayView.querySelector("[data-retry]").addEventListener("click", () => loadToday(force));
       return;
     }
 
     if (data?.error) {
-      const extra = data.raw ? `\n\nRaw response:\n${data.raw}` : "";
-      renderError(data.error + extra);
+      todayView.innerHTML = errorHtml(data.error + (data.raw ? `\n\nRaw response:\n${data.raw}` : ""));
+      todayView.querySelector("[data-retry]").addEventListener("click", () => loadToday(force));
       return;
     }
-    if (!data?.items || !Array.isArray(data.items)) { renderError("Unexpected response shape from the function."); return; }
+    if (!data?.items || !Array.isArray(data.items)) {
+      todayView.innerHTML = errorHtml("Unexpected response shape from the function.");
+      return;
+    }
 
-    renderItems(data.items);
+    await renderItemsInto(todayView, data.items);
   }
 
-  document.getElementById("regen-btn").addEventListener("click", loadBrief);
+  document.getElementById("regen-btn").addEventListener("click", () => loadToday(true));
+
+  async function loadArchiveList() {
+    const { data, error } = await sb.from("news_items").select("brief_date").neq("brief_date", todayStr());
+    if (error) {
+      archiveNote.textContent = "Couldn't load archive: " + error.message;
+      archiveNote.style.display = "block";
+      archiveDateList.innerHTML = "";
+      archiveContent.innerHTML = "";
+      return;
+    }
+    const dates = [...new Set(data.map(d => d.brief_date))].sort().reverse();
+    if (!dates.length) {
+      archiveNote.style.display = "block";
+      archiveDateList.innerHTML = "";
+      archiveContent.innerHTML = "";
+      return;
+    }
+    archiveNote.style.display = "none";
+    archiveDateList.innerHTML = "";
+    dates.forEach((d, i) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "archive-date-btn" + (i === 0 ? " active" : "");
+      btn.textContent = d;
+      btn.addEventListener("click", () => {
+        archiveDateList.querySelectorAll(".archive-date-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        loadArchiveDate(d);
+      });
+      archiveDateList.appendChild(btn);
+    });
+    loadArchiveDate(dates[0]);
+  }
+
+  async function loadArchiveDate(dateStr) {
+    archiveContent.innerHTML = loadingHtml("Loading " + dateStr + "...");
+    const { data, error } = await sb.from("news_items").select("*").eq("brief_date", dateStr).order("id");
+    if (error) { archiveContent.innerHTML = errorHtml(error.message); return; }
+    await renderItemsInto(archiveContent, data);
+  }
 
   const tabToday = document.getElementById("tab-today");
   const tabArchive = document.getElementById("tab-archive");
-  const archiveNote = document.getElementById("archive-note");
 
   tabToday.addEventListener("click", () => {
     tabToday.classList.add("active"); tabArchive.classList.remove("active");
-    todayView.style.display = "block"; archiveNote.style.display = "none";
+    todayView.style.display = "block"; archiveView.style.display = "none";
   });
   tabArchive.addEventListener("click", () => {
     tabArchive.classList.add("active"); tabToday.classList.remove("active");
-    todayView.style.display = "none"; archiveNote.style.display = "block";
+    todayView.style.display = "none"; archiveView.style.display = "block";
+    loadArchiveList();
   });
 </script>
 </body>
