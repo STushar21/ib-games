@@ -54,7 +54,16 @@
     generateBtn.disabled = false;
     generateBtn.textContent = "Generate news (test)";
     if (error) {
-      output.textContent = "ERROR:\n" + JSON.stringify(error, null, 2);
+      let message = error.message;
+      if (error.context && typeof error.context.json === "function") {
+        try {
+          const body = await error.context.json();
+          message = JSON.stringify(body, null, 2);
+        } catch (parseErr) {
+          // context wasn't valid JSON — fall back to the generic message
+        }
+      }
+      output.textContent = "ERROR:\n" + message;
       return;
     }
     output.textContent = JSON.stringify(data, null, 2);
