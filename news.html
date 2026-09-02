@@ -71,18 +71,27 @@
   .brief-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
   .brief-date { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--ink-faint); }
 
-  .tab-row { display: flex; gap: 6px; margin-bottom: 20px; }
+  .tab-row { display: flex; gap: 6px; margin-bottom: 20px; align-items: center; }
   .tab-row button {
     background: transparent; border: 1px solid var(--border); color: var(--ink-soft);
     font-size: 12px; font-weight: 600; padding: 8px 16px; border-radius: 6px; cursor: pointer;
   }
   .tab-row button.active { background: var(--gold-soft); color: var(--gold); border-color: var(--gold-dim); }
   .tab-row button:disabled { opacity: 0.4; cursor: not-allowed; }
+  #regen-btn { margin-left: auto; }
 
   .archive-note {
     font-size: 12px; color: var(--ink-faint); text-align: center; padding: 30px 20px;
     border: 1px dashed var(--border); border-radius: 8px; display: none;
   }
+
+  .loading-note, .error-note {
+    font-size: 12.5px; text-align: center; padding: 24px 20px;
+    border: 1px dashed var(--border); border-radius: 8px; margin-bottom: 12px;
+  }
+  .loading-note { color: var(--ink-faint); }
+  .error-note { color: var(--red); border-color: var(--red); }
+  .error-note button { margin-top: 10px; }
 
   .news-card {
     background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
@@ -145,51 +154,29 @@
 </div>
 <div class="sub">Markets, deals, and macro — a few minutes a day.</div>
 
-<div class="placeholder-banner">Static preview — placeholder content, not yet wired to live generation.</div>
+<div class="placeholder-banner">Live generation — not yet cached, so every load/regenerate is a real (paid) API call. Storage comes next.</div>
 
 <div class="tab-row">
   <button type="button" class="active" id="tab-today">Today</button>
   <button type="button" id="tab-archive">Archive</button>
+  <button type="button" id="regen-btn">↻ Regenerate</button>
 </div>
 
-<div id="today-view">
-  <div class="news-card" data-id="1">
-    <span class="news-cat markets">Markets</span>
-    <div class="news-headline">Placeholder: benchmark index drifts on rate-path uncertainty</div>
-    <div class="news-summary">This is placeholder text standing in for a real, generated market-moves summary — a short two to three sentence recap of what actually moved and why, once wired to live generation.</div>
-    <div class="news-why">Why it matters for interviews: expect a "what's the market done this week" question in almost every superday.</div>
-    <div class="news-footer"><button type="button" class="news-read-btn" data-read="1">Mark as read</button></div>
-  </div>
-
-  <div class="news-card" data-id="2">
-    <span class="news-cat deals">Deals</span>
-    <div class="news-headline">Placeholder: mid-cap acquisition announced in a placeholder sector</div>
-    <div class="news-summary">Placeholder summary of deal rationale, structure, and size — this is where a real M&amp;A or financing headline and its two-sentence context will render once the edge function is wired in.</div>
-    <div class="news-why">Why it matters for interviews: a good ready-made example if asked "any recent deals you've been following?"</div>
-    <div class="news-footer"><button type="button" class="news-read-btn" data-read="2">Mark as read</button></div>
-  </div>
-
-  <div class="news-card" data-id="3">
-    <span class="news-cat macro">Macro</span>
-    <div class="news-headline">Placeholder: central bank commentary on inflation trajectory</div>
-    <div class="news-summary">Placeholder macro summary — a broader economic item (rates, inflation, employment data, trade policy) with brief context on what it signals.</div>
-    <div class="news-why">Why it matters for interviews: shows you can connect macro conditions to deal activity, not just recite headlines.</div>
-    <div class="news-footer"><button type="button" class="news-read-btn" data-read="3">Mark as read</button></div>
-  </div>
-</div>
-
-<div class="archive-note" id="archive-note">Archive will appear here once briefs have actually been generated — nothing to show yet on this static preview.</div>
+<div id="today-view"></div>
+<div class="archive-note" id="archive-note">Archive will appear here once briefs are actually being stored — nothing to show yet.</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  const SUPABASE_URL = "https://zkwrqdpumffwrkedhkch.supabase.co";
-  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inprd3JxZHB1bWZmd3JrZWRoa2NoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyNTE1MzUsImV4cCI6MjEwMzgyNzUzNX0.x4FT30VdOp1dvQ67citcjn3Cfm2ZD3JwVNuKFmKXr0w";
-  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const sb = window.supabase.createClient(
+    "https://zkwrqdpumffwrkedhkch.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inprd3JxZHB1bWZmd3JrZWRoa2NoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyNTE1MzUsImV4cCI6MjEwMzgyNzUzNX0.x4FT30VdOp1dvQ67citcjn3Cfm2ZD3JwVNuKFmKXr0w"
+  );
 
   sb.auth.onAuthStateChange((event, session) => {
     document.getElementById("login-gate").style.display = session ? "none" : "block";
     document.getElementById("app-content").style.display = session ? "block" : "none";
+    if (session) loadBrief();
   });
 
   document.getElementById("login-btn").addEventListener("click", async () => {
@@ -205,20 +192,79 @@
 
   document.getElementById("brief-date").textContent = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
 
-  // Mark-as-read is purely local/visual on this static preview — real
-  // per-user persistence (news_read_status table) comes in a later step.
-  document.querySelectorAll(".news-read-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const card = btn.closest(".news-card");
-      const isRead = btn.classList.toggle("is-read");
-      card.classList.toggle("is-read", isRead);
-      btn.textContent = isRead ? "Read ✓" : "Mark as read";
+  const todayView = document.getElementById("today-view");
+  const CAT_CLASS = { Markets: "markets", Deals: "deals", Macro: "macro" };
+
+  function renderItems(items) {
+    todayView.innerHTML = "";
+    items.forEach((item, i) => {
+      const card = document.createElement("div");
+      card.className = "news-card";
+      card.dataset.id = i;
+      const catClass = CAT_CLASS[item.category] || "markets";
+      card.innerHTML = `
+        <span class="news-cat ${catClass}">${item.category}</span>
+        <div class="news-headline">${item.headline}</div>
+        <div class="news-summary">${item.summary}</div>
+        ${item.why_it_matters ? `<div class="news-why">Why it matters for interviews: ${item.why_it_matters}</div>` : ""}
+        <div class="news-footer"><button type="button" class="news-read-btn" data-read="${i}">Mark as read</button></div>
+      `;
+      todayView.appendChild(card);
     });
-  });
+
+    // Mark-as-read is still purely local/visual — per-user persistence
+    // (news_read_status table) is a later step, not part of this wiring.
+    todayView.querySelectorAll(".news-read-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const card = btn.closest(".news-card");
+        const isRead = btn.classList.toggle("is-read");
+        card.classList.toggle("is-read", isRead);
+        btn.textContent = isRead ? "Read ✓" : "Mark as read";
+      });
+    });
+  }
+
+  function renderLoading() {
+    todayView.innerHTML = `<div class="loading-note">Generating today's brief — searching for recent news, this can take up to a minute...</div>`;
+  }
+
+  function renderError(message) {
+    todayView.innerHTML = `
+      <div class="error-note">
+        Couldn't generate the brief: ${message}
+        <br><button type="button" id="retry-btn" class="news-read-btn">Try again</button>
+      </div>`;
+    document.getElementById("retry-btn").addEventListener("click", loadBrief);
+  }
+
+  async function loadBrief() {
+    renderLoading();
+    const { data, error } = await sb.functions.invoke("generate-news-brief", { body: {} });
+
+    if (error) {
+      let message = error.message;
+      if (error.context && typeof error.context.json === "function") {
+        try {
+          const body = await error.context.json();
+          if (body?.error) message = body.error;
+        } catch (parseErr) {
+          // fall back to the generic message
+        }
+      }
+      renderError(message);
+      return;
+    }
+
+    if (data?.error) { renderError(data.error); return; }
+    if (!data?.items || !Array.isArray(data.items)) { renderError("Unexpected response shape from the function."); return; }
+
+    renderItems(data.items);
+  }
+
+  document.getElementById("regen-btn").addEventListener("click", loadBrief);
 
   const tabToday = document.getElementById("tab-today");
   const tabArchive = document.getElementById("tab-archive");
-  const todayView = document.getElementById("today-view");
   const archiveNote = document.getElementById("archive-note");
 
   tabToday.addEventListener("click", () => {
