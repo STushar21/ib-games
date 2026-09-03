@@ -105,6 +105,40 @@
   .play-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
   .play-back { background: none; border: 1px solid var(--border); color: var(--ink-soft); font-size: 12px; font-weight: 600; padding: 7px 14px; border-radius: 5px; cursor: pointer; }
 
+  .intro-grid { display: grid; grid-template-columns: 240px 1fr 240px; gap: 18px; align-items: stretch; }
+  @media (max-width: 820px) {
+    .intro-grid { grid-template-columns: 1fr; }
+  }
+  .intro-panel {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 18px 20px; box-shadow: 0 1px 8px rgba(33,40,59,0.04);
+    transition: filter 0.4s ease, opacity 0.4s ease;
+  }
+  .intro-panel.blurred { filter: blur(5px); opacity: 0.45; pointer-events: none; }
+  .intro-panel h3 {
+    font-family: 'Source Serif 4', Georgia, serif; font-size: 12.5px; color: var(--gold-dim);
+    text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 10px; font-weight: 700;
+  }
+  .intro-panel ul { margin: 0 0 18px; padding-left: 16px; font-size: 12px; color: var(--ink-soft); line-height: 1.65; }
+  .intro-panel ul:last-child { margin-bottom: 0; }
+  .intro-panel .why-text { font-size: 12px; color: var(--ink-soft); line-height: 1.65; font-style: italic; }
+  .intro-center {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 40px 24px; text-align: center; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; min-height: 300px;
+    box-shadow: 0 1px 10px rgba(33,40,59,0.04);
+  }
+  .intro-tag {
+    font-size: 10.5px; font-weight: 700; color: var(--gold); background: var(--gold-soft);
+    padding: 3px 10px; border-radius: 20px; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 14px;
+  }
+  .intro-center h2 { font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; margin-bottom: 28px; }
+  #intro-start-btn {
+    background: var(--gold); color: var(--bg); border: none; border-radius: 999px;
+    padding: 14px 34px; font-weight: 700; cursor: pointer; font-size: 14px; letter-spacing: 0.03em;
+  }
+  .intro-countdown { display: none; font-family: 'IBM Plex Mono', monospace; font-size: 64px; font-weight: 700; color: var(--gold); }
+
   .hud-row { display: flex; align-items: center; gap: 30px; justify-content: center; margin-bottom: 24px; flex-wrap: wrap; }
   .timer-ring { position: relative; width: 108px; height: 108px; }
   .timer-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
@@ -350,6 +384,30 @@
       <div class="g-desc">Clues reveal one at a time. Guess the sector early for more points — or play it safe.</div>
       <span class="g-tag">Puzzle · Push Your Luck</span>
       <div class="g-best" id="best-sector_pinpoint">Best: —</div>
+    </div>
+  </div>
+</div>
+
+<div id="intro-screen" style="display:none;">
+  <div class="play-head"><button class="play-back" id="intro-back-btn" type="button">&larr; Back to games</button></div>
+  <div class="intro-grid">
+    <div class="intro-panel" id="intro-panel-left">
+      <h3>How to play</h3>
+      <ul id="intro-howto"></ul>
+      <h3>Scoring</h3>
+      <ul id="intro-scoring"></ul>
+    </div>
+    <div class="intro-center">
+      <div class="intro-tag" id="intro-tag"></div>
+      <h2 id="intro-title"></h2>
+      <button type="button" id="intro-start-btn">Start Game</button>
+      <div class="intro-countdown" id="intro-countdown">3</div>
+    </div>
+    <div class="intro-panel" id="intro-panel-right">
+      <h3>Tips for a high score</h3>
+      <ul id="intro-tips"></ul>
+      <h3>Why it matters</h3>
+      <div class="why-text" id="intro-why"></div>
     </div>
   </div>
 </div>
@@ -618,7 +676,7 @@
   function pick(arr) { return arr[randInt(0, arr.length - 1)]; }
 
   function showScreen(id) {
-    ["menu-screen", "play-screen", "play-screen-mm", "play-screen-srf", "play-screen-ss", "play-screen-dc", "play-screen-cg", "play-screen-rl", "play-screen-sp", "end-screen"].forEach(s => {
+    ["menu-screen", "intro-screen", "play-screen", "play-screen-mm", "play-screen-srf", "play-screen-ss", "play-screen-dc", "play-screen-cg", "play-screen-rl", "play-screen-sp", "end-screen"].forEach(s => {
       document.getElementById(s).style.display = s === id ? "block" : "none";
     });
     if (id === "menu-screen") loadStreakAndBests();
@@ -629,6 +687,234 @@
   function flashStage(el, kind) { el.classList.add(kind); setTimeout(() => el.classList.remove(kind), 400); }
 
   let currentGame = null;
+
+  // =====================================================================
+  // Intro screen — shown before every game starts, explains rules,
+  // scoring, tips, and finance relevance, then counts down 3-2-1.
+  // =====================================================================
+  const GAME_INFO = {
+    mental_math_blitz: {
+      tag: "Reflex · 60s",
+      title: "Mental Math Blitz",
+      howto: [
+        "A calculation appears — percentages, margins, multiplication, or growth.",
+        "Type the answer and press Enter or hit the button.",
+        "Correct answers advance instantly to the next question.",
+      ],
+      scoring: [
+        "+1 point per correct answer.",
+        "Wrong answers cost 3 seconds off the clock.",
+        "Session ends when the 60-second timer hits zero.",
+      ],
+      tips: [
+        "Round numbers early rather than calculating exactly.",
+        "Estimate the first digit fast — speed matters more than precision here.",
+        "Don't freeze on one question; a quick guess costs less than hesitation.",
+      ],
+      why: "Mental math speed is tested directly in interviews and used constantly on the job to sanity-check numbers live in front of senior bankers.",
+    },
+    multiple_match: {
+      tag: "Reflex · Combo",
+      title: "Multiple Match",
+      howto: [
+        "A sector and a trading multiple appear (e.g. \"SaaS — EV/EBITDA 31x\").",
+        "Call HIGH or LOW versus that sector's typical range.",
+        "You have about 3.5 seconds per call.",
+      ],
+      scoring: [
+        "Correct calls chain into a combo multiplier, up to ×4.",
+        "A wrong call resets your combo and costs 2 seconds.",
+        "Session ends when the 45-second timer hits zero.",
+      ],
+      tips: [
+        "Learn the rough sector bands — software and luxury run rich, grocery and auto run cheap.",
+        "Don't chase a guess you're unsure of just to protect a combo.",
+        "Values always sit clearly outside the normal range — trust your first instinct.",
+      ],
+      why: "Quick valuation intuition is exactly what's tested when an interviewer asks whether a multiple looks rich or cheap.",
+    },
+    spot_the_red_flag: {
+      tag: "Reflex · 6s rounds",
+      title: "Spot the Red Flag",
+      howto: [
+        "A short Income Statement or Balance Sheet appears.",
+        "One line is wrong — a broken subtotal or an impossible negative.",
+        "Click the line you think is off within 6 seconds.",
+      ],
+      scoring: [
+        "+1 point per correct find.",
+        "A wrong pick or timeout reveals the real answer and costs 3 seconds.",
+        "Session ends when the 60-second timer hits zero.",
+      ],
+      tips: [
+        "Check subtotals first — do the lines above actually add up?",
+        "Then scan for negative signs on lines that should always be positive.",
+        "The anomaly is always clearly wrong once spotted — don't overthink small rounding.",
+      ],
+      why: "Sanity-checking statements for errors is a core junior banking skill, used constantly when reviewing models and company filings.",
+    },
+    statement_sprint: {
+      tag: "Reflex · Ramping",
+      title: "Statement Sprint",
+      howto: [
+        "A line item appears (e.g. \"Retained Earnings\").",
+        "Sort it into Income Statement, Balance Sheet, or Cash Flow before time runs out.",
+        "Correct answers speed up the next round; a miss resets the pace.",
+      ],
+      scoring: [
+        "+1 point per correct sort.",
+        "A wrong answer or timeout resets your streak and costs 3 seconds.",
+        "Session ends when the 45-second timer hits zero.",
+      ],
+      tips: [
+        "Anchor on a few unmistakable items per statement (Revenue = IS, Total Assets = BS, CapEx = CF).",
+        "Reason from those anchors rather than memorizing all 34 items individually.",
+        "Ease off slightly right after a streak resets rather than rushing back to top speed.",
+      ],
+      why: "Instantly knowing which statement a line belongs to is foundational to accounting and financial modeling.",
+    },
+    deal_chain: {
+      tag: "Puzzle · Sequence",
+      title: "Deal Chain",
+      howto: [
+        "8 cells appear — 6 real steps of a deal process plus 2 decoys from other processes.",
+        "Click the real steps in the correct order.",
+        "A completed chain immediately starts a new, different process.",
+      ],
+      scoring: [
+        "+1 point per completed chain.",
+        "A wrong or out-of-order click costs 4 seconds but doesn't reset your progress.",
+        "Session ends when the 60-second timer hits zero.",
+      ],
+      tips: [
+        "Identify the process type first (M&A, LBO, or IPO) from any one recognizable step.",
+        "Work chronologically once you've placed the first step.",
+        "A decoy is always a step from a different process — if it doesn't fit the story, skip it.",
+      ],
+      why: "Understanding deal process sequencing is asked directly in \"walk me through an M&A process\" style interview questions.",
+    },
+    comp_grid: {
+      tag: "Puzzle · Logic",
+      title: "Comp Grid",
+      howto: [
+        "16 companies appear in a 4×4 grid, all unclassified.",
+        "Click a cell to cycle it through Growth → Value → empty.",
+        "Every row and column needs exactly 2 Growth and 2 Value, with no three of the same type in a row.",
+      ],
+      scoring: [
+        "+1 point per grid solved.",
+        "A failed Check costs 4 seconds — but doesn't reset your grid, just keep adjusting.",
+        "Session ends when the 90-second timer hits zero.",
+      ],
+      tips: [
+        "Fill the most constrained rows/columns first — two cells sharing a type often locks the rest.",
+        "Work outward from corners and edges rather than randomly.",
+        "Use the invalid-row highlight after a failed check to fix only what's actually wrong.",
+      ],
+      why: "Builds the same structured, constraint-driven thinking used when building a defensible comparable companies analysis.",
+    },
+    ratio_ladder: {
+      tag: "Puzzle · Limited Moves",
+      title: "Ratio Ladder",
+      howto: [
+        "You're shown a starting ROE and a target ROE.",
+        "Nudge Margin, Turnover, or Leverage one step at a time with the +/- buttons.",
+        "Reach the exact target within your move budget.",
+      ],
+      scoring: [
+        "+1 point per ladder solved.",
+        "Running out of moves resets the round and costs 5 seconds.",
+        "Session ends when the 75-second timer hits zero.",
+      ],
+      tips: [
+        "Work out roughly how much bigger or smaller the target is before moving anything.",
+        "Leverage and Turnover move ROE multiplicatively — small nudges can swing it more than expected.",
+        "Don't spam one input; alternate based on which lever gets you closest fastest.",
+      ],
+      why: "This is literally the DuPont ROE decomposition — one of the most common technical frameworks tested in IB/PE interviews.",
+    },
+    sector_pinpoint: {
+      tag: "Puzzle · Push Your Luck",
+      title: "Sector Pinpoint",
+      howto: [
+        "A mystery company's sector is revealed one clue at a time — growth, margin, geography, then a headline.",
+        "Guess the sector anytime from the option list, or reveal another clue first.",
+        "Each clue you wait for lowers the points on offer.",
+      ],
+      scoring: [
+        "Guessing after clue 1 scores 4 points, dropping to 3, 2, then 1 by the last clue.",
+        "A wrong guess ends the round immediately and costs 3 seconds.",
+        "Session ends when the 75-second timer hits zero.",
+      ],
+      tips: [
+        "Growth rate and margin together usually narrow it to 2–3 sectors fast.",
+        "Use geography or the headline clue to break a tie rather than waiting for full certainty.",
+        "Guessing early is worth the risk once you've built pattern recognition — don't always play it safe.",
+      ],
+      why: "Quickly pattern-matching a business from a handful of characteristics is exactly what case-study and market-sizing questions test.",
+    },
+  };
+
+  const START_FUNCTIONS = {
+    mental_math_blitz: () => startMMB(),
+    multiple_match: () => startMM(),
+    spot_the_red_flag: () => startSRF(),
+    statement_sprint: () => startSS(),
+    deal_chain: () => startDC(),
+    comp_grid: () => startCG(),
+    ratio_ladder: () => startRL(),
+    sector_pinpoint: () => startSP(),
+  };
+
+  let introCountdownTimeout = null;
+  const introPanels = document.querySelectorAll(".intro-panel");
+  const introStartBtn = document.getElementById("intro-start-btn");
+  const introCountdownEl = document.getElementById("intro-countdown");
+
+  function showIntro(key) {
+    clearTimeout(introCountdownTimeout);
+    const info = GAME_INFO[key];
+    document.getElementById("intro-tag").textContent = info.tag;
+    document.getElementById("intro-title").textContent = info.title;
+    document.getElementById("intro-howto").innerHTML = info.howto.map(t => `<li>${t}</li>`).join("");
+    document.getElementById("intro-scoring").innerHTML = info.scoring.map(t => `<li>${t}</li>`).join("");
+    document.getElementById("intro-tips").innerHTML = info.tips.map(t => `<li>${t}</li>`).join("");
+    document.getElementById("intro-why").textContent = info.why;
+
+    introStartBtn.style.display = "inline-block";
+    introCountdownEl.style.display = "none";
+    introPanels.forEach(p => p.classList.remove("blurred"));
+    introStartBtn.onclick = () => startIntroCountdown(key);
+
+    showScreen("intro-screen");
+  }
+
+  function startIntroCountdown(key) {
+    introStartBtn.style.display = "none";
+    introPanels.forEach(p => p.classList.add("blurred"));
+    introCountdownEl.style.display = "block";
+
+    let n = 3;
+    introCountdownEl.textContent = String(n);
+    clearTimeout(introCountdownTimeout);
+
+    function tick() {
+      n -= 1;
+      if (n > 0) {
+        introCountdownEl.textContent = String(n);
+        introCountdownTimeout = setTimeout(tick, 700);
+      } else {
+        introCountdownEl.textContent = "GO";
+        introCountdownTimeout = setTimeout(() => START_FUNCTIONS[key](), 500);
+      }
+    }
+    introCountdownTimeout = setTimeout(tick, 700);
+  }
+
+  document.getElementById("intro-back-btn").addEventListener("click", () => {
+    clearTimeout(introCountdownTimeout);
+    showScreen("menu-screen");
+  });
   document.getElementById("play-again-btn").addEventListener("click", () => {
     if (currentGame === "mental_math_blitz") startMMB();
     else if (currentGame === "multiple_match") startMM();
@@ -692,7 +978,7 @@
   const ringFill = document.getElementById("ring-fill");
   ringFill.style.strokeDasharray = String(RING_CIRC);
 
-  document.querySelector('[data-game="mental_math_blitz"]').addEventListener("click", startMMB);
+  document.querySelector('[data-game="mental_math_blitz"]').addEventListener("click", () => showIntro("mental_math_blitz"));
   document.getElementById("back-btn").addEventListener("click", () => showScreen("menu-screen"));
 
   function startMMB() {
@@ -809,7 +1095,7 @@
   const mmStage = document.getElementById("mm-question-stage");
   mmRing.style.strokeDasharray = String(RING_CIRC);
 
-  document.querySelector('[data-game="multiple_match"]').addEventListener("click", startMM);
+  document.querySelector('[data-game="multiple_match"]').addEventListener("click", () => showIntro("multiple_match"));
   document.getElementById("back-btn-mm").addEventListener("click", () => { clearTimeout(mmQTimeout); clearInterval(mmSessionInterval); showScreen("menu-screen"); });
 
   function startMM() {
@@ -971,7 +1257,7 @@
   const srfStage = document.getElementById("srf-question-stage");
   srfRing.style.strokeDasharray = String(RING_CIRC);
 
-  document.querySelector('[data-game="spot_the_red_flag"]').addEventListener("click", startSRF);
+  document.querySelector('[data-game="spot_the_red_flag"]').addEventListener("click", () => showIntro("spot_the_red_flag"));
   document.getElementById("back-btn-srf").addEventListener("click", () => { clearTimeout(srfRoundTimeout); clearInterval(srfInterval); showScreen("menu-screen"); });
 
   function startSRF() {
@@ -1113,7 +1399,7 @@
   const ssStage = document.getElementById("ss-question-stage");
   ssRing.style.strokeDasharray = String(RING_CIRC);
 
-  document.querySelector('[data-game="statement_sprint"]').addEventListener("click", startSS);
+  document.querySelector('[data-game="statement_sprint"]').addEventListener("click", () => showIntro("statement_sprint"));
   document.getElementById("back-btn-ss").addEventListener("click", () => { clearTimeout(ssItemTimeout); clearInterval(ssSessionInterval); showScreen("menu-screen"); });
 
   function startSS() {
@@ -1257,7 +1543,7 @@
   const dcStage = document.getElementById("dc-question-stage");
   dcRing.style.strokeDasharray = String(RING_CIRC);
 
-  document.querySelector('[data-game="deal_chain"]').addEventListener("click", startDC);
+  document.querySelector('[data-game="deal_chain"]').addEventListener("click", () => showIntro("deal_chain"));
   document.getElementById("back-btn-dc").addEventListener("click", () => { clearInterval(dcInterval); showScreen("menu-screen"); });
 
   function startDC() {
@@ -1405,7 +1691,7 @@
   const cgMsg = document.getElementById("cg-msg");
   cgRing.style.strokeDasharray = String(RING_CIRC);
 
-  document.querySelector('[data-game="comp_grid"]').addEventListener("click", startCG);
+  document.querySelector('[data-game="comp_grid"]').addEventListener("click", () => showIntro("comp_grid"));
   document.getElementById("back-btn-cg").addEventListener("click", () => { clearInterval(cgInterval); showScreen("menu-screen"); });
 
   function startCG() {
@@ -1581,7 +1867,7 @@
     { key: "lUnits", label: "Leverage", fmt: v => `${(v * 0.25).toFixed(2)}x` },
   ];
 
-  document.querySelector('[data-game="ratio_ladder"]').addEventListener("click", startRL);
+  document.querySelector('[data-game="ratio_ladder"]').addEventListener("click", () => showIntro("ratio_ladder"));
   document.getElementById("back-btn-rl").addEventListener("click", () => { clearInterval(rlInterval); showScreen("menu-screen"); });
 
   function startRL() {
@@ -1735,7 +2021,7 @@
   const spStage = document.getElementById("sp-question-stage");
   spRing.style.strokeDasharray = String(RING_CIRC);
 
-  document.querySelector('[data-game="sector_pinpoint"]').addEventListener("click", startSP);
+  document.querySelector('[data-game="sector_pinpoint"]').addEventListener("click", () => showIntro("sector_pinpoint"));
   document.getElementById("back-btn-sp").addEventListener("click", () => { clearTimeout(spStageTimeout); clearInterval(spInterval); showScreen("menu-screen"); });
   spRevealBtn.addEventListener("click", () => spReveal());
 
