@@ -4,29 +4,29 @@
 <meta charset="UTF-8">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=IBM+Plex+Mono:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,600;0,8..60,700;1,8..60,600;1,8..60,700&family=IBM+Plex+Mono:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>Reps — Daily Practice</title>
 <style>
   :root {
-    --bg: #0B0F1A;
-    --surface: #121826;
-    --surface-alt: #182036;
-    --border: #262E45;
-    --ink: #E7E9F0;
-    --ink-soft: #9099B3;
-    --ink-faint: #5C6480;
-    --gold: #C9A24B;
-    --gold-dim: #8C7331;
-    --gold-soft: rgba(201,162,75,0.10);
-    --green: #34A776;
-    --green-soft: rgba(52,167,118,0.12);
-    --red: #C4544A;
-    --red-soft: rgba(196,84,74,0.14);
-    --steel: #6C8CAE;
-    --steel-soft: rgba(108,140,174,0.12);
+    --bg: #F7F3EA;
+    --surface: #FFFFFF;
+    --surface-alt: #F1EBDC;
+    --border: #E3DAC4;
+    --ink: #21283B;
+    --ink-soft: #5B6472;
+    --ink-faint: #948E7A;
+    --gold: #A8843F;
+    --gold-dim: #8C6A28;
+    --gold-soft: rgba(168,132,63,0.10);
+    --green: #2F6B4F;
+    --green-soft: rgba(47,107,79,0.10);
+    --red: #A6453B;
+    --red-soft: rgba(166,69,59,0.10);
+    --steel: #4F6B8A;
+    --steel-soft: rgba(79,107,138,0.10);
   }
   * { box-sizing: border-box; }
   body {
@@ -35,6 +35,12 @@
     max-width: min(980px, 94vw); margin: 32px auto 60px; padding: 0 16px;
   }
   h1 { font-family: 'Source Serif 4', Georgia, serif; font-weight: 700; font-size: 26px; margin: 0 0 4px; }
+  h1 em { font-style: italic; font-weight: 600; color: var(--gold-dim); }
+  .kicker {
+    display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--gold-dim);
+    letter-spacing: 0.18em; text-transform: uppercase; font-weight: 600; margin-bottom: 10px;
+  }
+  .kicker::before { content: ""; width: 22px; height: 1px; background: var(--gold-dim); display: inline-block; }
   .sub { color: var(--ink-soft); font-size: 13px; margin-bottom: 22px; }
 
   .top-nav {
@@ -42,6 +48,7 @@
     display: flex; align-items: center; justify-content: space-between; gap: 8px;
     background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
     padding: 6px 6px 6px 4px; margin: 0 0 26px;
+    box-shadow: 0 2px 14px rgba(33,40,59,0.05);
   }
   .top-nav .nav-left { display: flex; align-items: center; gap: 2px; }
   .top-nav .brand {
@@ -67,12 +74,13 @@
     border-radius: 5px; padding: 11px 12px; font-size: 13.5px; font-family: inherit; color: var(--ink);
   }
   #login-gate input:focus { outline: none; border-color: var(--gold-dim); }
-  #login-btn { width: 100%; background: var(--gold); color: #14100A; border: none; border-radius: 5px; padding: 11px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; letter-spacing: 0.03em; margin-top: 2px; }
+  #login-btn { width: 100%; background: var(--gold); color: var(--bg); border: none; border-radius: 999px; padding: 12px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; letter-spacing: 0.03em; margin-top: 2px; }
 
   .streak-strip {
     display: flex; align-items: center; gap: 14px;
     background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--gold);
     border-radius: 6px; padding: 14px 18px; margin-bottom: 22px;
+    box-shadow: 0 1px 8px rgba(33,40,59,0.04);
   }
   .streak-strip .streak-label { font-size: 10.5px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; }
   .streak-strip .streak-num { font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 20px; color: var(--gold); }
@@ -80,9 +88,10 @@
   .game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; margin-bottom: 28px; }
   .game-card {
     background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
-    padding: 16px; cursor: pointer; transition: border-color 0.14s ease, background 0.14s ease;
+    padding: 16px; cursor: pointer; transition: border-color 0.14s ease, background 0.14s ease, box-shadow 0.14s ease;
+    box-shadow: 0 1px 8px rgba(33,40,59,0.04);
   }
-  .game-card:hover { border-color: var(--gold-dim); background: var(--surface-alt); }
+  .game-card:hover { border-color: var(--gold-dim); background: var(--surface-alt); box-shadow: 0 4px 16px rgba(33,40,59,0.08); }
   .game-card.locked { cursor: default; opacity: 0.45; }
   .game-card.locked:hover { border-color: var(--border); background: var(--surface); }
   .game-card .g-index { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--gold-dim); margin-bottom: 10px; letter-spacing: 0.05em; }
@@ -120,6 +129,7 @@
     background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
     padding: 46px 24px; text-align: center; margin-bottom: 18px;
     transition: background 0.15s ease, border-color 0.15s ease;
+    box-shadow: 0 1px 10px rgba(33,40,59,0.04);
   }
   .question-stage.compact { padding: 26px 24px; }
   .question-stage.flash-correct { background: var(--green-soft); border-color: var(--green); }
@@ -134,12 +144,12 @@
   }
   #answer-input:focus { outline: none; border-color: var(--gold-dim); }
   .answer-row button {
-    background: var(--gold); color: #14100A; border: none; border-radius: 5px; padding: 12px 20px;
+    background: var(--gold); color: var(--bg); border: none; border-radius: 999px; padding: 12px 20px;
     font-weight: 700; cursor: pointer; font-size: 13.5px; letter-spacing: 0.03em;
   }
   .hl-btn {
     background: transparent; border: 1px solid var(--gold-dim); color: var(--gold);
-    padding: 15px 34px; border-radius: 5px; font-weight: 700; letter-spacing: 0.1em;
+    padding: 15px 34px; border-radius: 999px; font-weight: 700; letter-spacing: 0.1em;
     cursor: pointer; font-size: 14px;
   }
   .hl-btn:hover { background: var(--gold-soft); }
@@ -190,7 +200,7 @@
   .cg-cell.cg-value .cg-state { color: var(--steel); }
   .cg-cell.cg-invalid { border-color: var(--red) !important; background: var(--red-soft) !important; }
   .cg-check-btn {
-    background: var(--gold); color: #14100A; border: none; border-radius: 5px;
+    background: var(--gold); color: var(--bg); border: none; border-radius: 999px;
     padding: 12px 26px; font-weight: 700; cursor: pointer; font-size: 13px; letter-spacing: 0.04em;
   }
   .cg-msg { font-size: 11.5px; color: var(--ink-faint); margin-top: 10px; min-height: 14px; }
@@ -222,7 +232,7 @@
   .sp-guess-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; max-width: 420px; margin: 0 auto 14px; }
   .sp-guess-btn {
     background: transparent; border: 1px solid var(--gold-dim); color: var(--gold);
-    padding: 11px 10px; border-radius: 5px; font-weight: 700; letter-spacing: 0.02em;
+    padding: 11px 10px; border-radius: 999px; font-weight: 700; letter-spacing: 0.02em;
     cursor: pointer; font-size: 11.5px;
   }
   .sp-guess-btn:hover { background: var(--gold-soft); }
@@ -230,7 +240,7 @@
   .sp-guess-btn.wrong-flag { border-color: var(--red); color: var(--red); background: var(--red-soft); }
   .sp-reveal-btn {
     background: transparent; border: 1px solid var(--border); color: var(--ink-soft);
-    padding: 10px 20px; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer;
+    padding: 10px 20px; border-radius: 999px; font-size: 12px; font-weight: 600; cursor: pointer;
   }
   .sp-reveal-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
   .sp-reveal-btn:disabled { opacity: 0.3; cursor: default; }
@@ -240,8 +250,8 @@
   #end-screen .final-score { font-family: 'IBM Plex Mono', monospace; font-size: 52px; font-weight: 700; margin: 10px 0; color: var(--gold); }
   #end-screen .best-line { font-size: 12.5px; color: var(--ink-soft); margin-bottom: 26px; font-family: 'IBM Plex Mono', monospace; }
   #end-screen .best-line.new-best { color: var(--green); }
-  #end-screen button { border: none; border-radius: 5px; padding: 12px 22px; font-weight: 700; cursor: pointer; font-size: 13px; margin: 0 6px; letter-spacing: 0.02em; }
-  #end-screen button.primary { background: var(--gold); color: #14100A; }
+  #end-screen button { border: none; border-radius: 999px; padding: 12px 22px; font-weight: 700; cursor: pointer; font-size: 13px; margin: 0 6px; letter-spacing: 0.02em; }
+  #end-screen button.primary { background: var(--gold); color: var(--bg); }
   #end-screen button.secondary { background: transparent; color: var(--ink-soft); border: 1px solid var(--border); }
 </style>
 </head>
@@ -251,7 +261,6 @@
   <div class="nav-left">
     <a href="games.html" class="brand">Reps</a>
     <a href="games.html" class="nav-link active">Games</a>
-    <a href="news.html" class="nav-link">News Brief</a>
   </div>
   <a href="https://stushar21.github.io/Internship-Tracker/" class="tracker-link">Tracker ↗</a>
 </nav>
@@ -272,7 +281,8 @@
 <div class="logout-bar"><button id="logout-btn" type="button">Sign out</button></div>
 
 <div id="menu-screen">
-  <h1>Daily Reps</h1>
+  <div class="kicker">Practice</div>
+  <h1>Daily <em>Reps</em></h1>
   <div class="sub">Pick a couple — 2 to 5 minutes a day is the point, not a long session.</div>
 
   <div class="streak-strip">
