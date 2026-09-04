@@ -193,12 +193,14 @@
 
   .stmt-list { text-align: left; max-width: 380px; margin: 0 auto; }
   .stmt-row {
-    display: flex; justify-content: space-between; align-items: center;
+    display: flex; justify-content: space-between; align-items: center; width: 100%;
     padding: 12px 16px; border: 1px solid var(--border); border-radius: 5px;
     margin-bottom: 7px; cursor: pointer; background: var(--bg);
     transition: border-color 0.12s ease, background 0.12s ease;
+    font-family: inherit; font-size: inherit; text-align: inherit;
   }
   .stmt-row:hover { border-color: var(--gold-dim); }
+  .stmt-row:focus-visible { outline: 2px solid var(--gold-dim); outline-offset: 2px; }
   .stmt-row.correct-flag { border-color: var(--green); background: var(--green-soft); }
   .stmt-row.wrong-flag { border-color: var(--red); background: var(--red-soft); }
   .stmt-label { font-size: 13px; color: var(--ink-soft); }
@@ -212,8 +214,10 @@
     padding: 12px 8px; min-height: 60px; display: flex; align-items: center; justify-content: center;
     text-align: center; font-size: 11px; line-height: 1.3; color: var(--ink-soft); cursor: pointer;
     transition: border-color 0.12s ease, background 0.12s ease, color 0.12s ease;
+    font-family: inherit;
   }
   .dc-cell:hover { border-color: var(--gold-dim); }
+  .dc-cell:focus-visible { outline: 2px solid var(--gold-dim); outline-offset: 2px; }
   .dc-cell.dc-done { border-color: var(--green); background: var(--green-soft); color: var(--ink); font-weight: 600; }
   .dc-cell.dc-wrong { border-color: var(--red); background: var(--red-soft); }
   .dc-line { stroke: var(--gold); stroke-width: 2.5; }
@@ -224,8 +228,10 @@
     padding: 10px 6px; min-height: 64px; display: flex; flex-direction: column;
     align-items: center; justify-content: center; gap: 5px; cursor: pointer;
     transition: border-color 0.12s ease, background 0.12s ease;
+    font-family: inherit;
   }
   .cg-cell:hover { border-color: var(--gold-dim); }
+  .cg-cell:focus-visible { outline: 2px solid var(--gold-dim); outline-offset: 2px; }
   .cg-cell .cg-name { font-size: 9.5px; color: var(--ink-faint); line-height: 1.25; }
   .cg-cell .cg-state { font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; color: var(--ink-faint); }
   .cg-cell.cg-growth { border-color: var(--gold-dim); background: var(--gold-soft); }
@@ -738,7 +744,7 @@
       title: "Spot the Red Flag",
       howto: [
         "A short Income Statement or Balance Sheet appears.",
-        "One line is wrong — a broken subtotal or an impossible negative.",
+        "One line is wrong — a broken subtotal, an impossible negative, or a percentage that doesn't match the numbers above it.",
         "Click the line you think is off within 6 seconds.",
       ],
       scoring: [
@@ -749,7 +755,7 @@
       tips: [
         "Check subtotals first — do the lines above actually add up?",
         "Then scan for negative signs on lines that should always be positive.",
-        "The anomaly is always clearly wrong once spotted — don't overthink small rounding.",
+        "If a percentage line is present, quickly recompute it in your head — it won't match if it's the anomaly.",
       ],
       why: "Sanity-checking statements for errors is a core junior banking skill, used constantly when reviewing models and company filings.",
     },
@@ -811,7 +817,7 @@
         "Work outward from corners and edges rather than randomly.",
         "Use the invalid-row highlight after a failed check to fix only what's actually wrong.",
       ],
-      why: "Builds the same structured, constraint-driven thinking used when building a defensible comparable companies analysis.",
+      why: "A logic-puzzle warm-up for the same structured, rule-based thinking you'll use when building or sanity-checking a comp set — the Growth/Value call here is a puzzle constraint, not a real valuation judgment.",
     },
     ratio_ladder: {
       tag: "Puzzle · Limited Moves",
@@ -967,7 +973,7 @@
 
   const MMB_TOTAL_TIME = 60;
   const RING_CIRC = 2 * Math.PI * 52;
-  let mmbTimeLeft = MMB_TOTAL_TIME, mmbScore = 0, mmbAnswer = null, mmbInterval = null, mmbRunning = false;
+  let mmbTimeLeft = MMB_TOTAL_TIME, mmbDeadline = 0, mmbScore = 0, mmbAnswer = null, mmbInterval = null, mmbRunning = false;
 
   const qText = document.getElementById("q-text");
   const answerInput = document.getElementById("answer-input");
@@ -983,7 +989,7 @@
 
   function startMMB() {
     currentGame = "mental_math_blitz";
-    mmbScore = 0; mmbTimeLeft = MMB_TOTAL_TIME; mmbRunning = true;
+    mmbScore = 0; mmbTimeLeft = MMB_TOTAL_TIME; mmbDeadline = Date.now() + MMB_TOTAL_TIME * 1000; mmbRunning = true;
     hudScore.textContent = "0";
     hudTime.textContent = String(MMB_TOTAL_TIME);
     ringFill.style.strokeDashoffset = "0";
@@ -996,7 +1002,10 @@
 
     clearInterval(mmbInterval);
     mmbInterval = setInterval(() => {
-      mmbTimeLeft -= 1;
+      // Deadline-based rather than decrement-per-tick, so a throttled
+      // background tab can't cause the countdown to drift — whenever this
+      // fires, it always recomputes the true remaining time from the clock.
+      mmbTimeLeft = Math.max(0, Math.round((mmbDeadline - Date.now()) / 1000));
       mmbUpdateTimer();
       if (mmbTimeLeft <= 0) mmbEnd();
     }, 1000);
@@ -1030,7 +1039,8 @@
       flashStage(questionStage, "flash-correct");
       mmbNext();
     } else {
-      mmbTimeLeft = Math.max(0, mmbTimeLeft - 3);
+      mmbDeadline -= 3000;
+      mmbTimeLeft = Math.max(0, Math.round((mmbDeadline - Date.now()) / 1000));
       mmbUpdateTimer();
       flashStage(questionStage, "flash-wrong");
       if (mmbTimeLeft <= 0) mmbEnd(); else mmbNext();
@@ -1082,7 +1092,7 @@
 
   const MM_TOTAL_TIME = 45;
   const MM_Q_TIME_MS = 3500;
-  let mmTimeLeft = MM_TOTAL_TIME, mmScore = 0, mmCombo = 0, mmMultiplier = 1;
+  let mmTimeLeft = MM_TOTAL_TIME, mmDeadline = 0, mmScore = 0, mmCombo = 0, mmMultiplier = 1;
   let mmSessionInterval = null, mmQTimeout = null, mmRunning = false, mmCurrent = null;
 
   const mmScoreEl = document.getElementById("mm-score");
@@ -1100,7 +1110,7 @@
 
   function startMM() {
     currentGame = "multiple_match";
-    mmScore = 0; mmCombo = 0; mmMultiplier = 1; mmTimeLeft = MM_TOTAL_TIME; mmRunning = true;
+    mmScore = 0; mmCombo = 0; mmMultiplier = 1; mmTimeLeft = MM_TOTAL_TIME; mmDeadline = Date.now() + MM_TOTAL_TIME * 1000; mmRunning = true;
     mmScoreEl.textContent = "0";
     mmComboEl.textContent = "×1";
     mmTimeEl.textContent = String(MM_TOTAL_TIME);
@@ -1111,7 +1121,7 @@
 
     clearInterval(mmSessionInterval);
     mmSessionInterval = setInterval(() => {
-      mmTimeLeft -= 1;
+      mmTimeLeft = Math.max(0, Math.round((mmDeadline - Date.now()) / 1000));
       mmUpdateSessionTimer();
       if (mmTimeLeft <= 0) mmEnd();
     }, 1000);
@@ -1165,7 +1175,8 @@
     } else {
       mmCombo = 0;
       mmUpdateMultiplier();
-      mmTimeLeft = Math.max(0, mmTimeLeft - 2);
+      mmDeadline -= 2000;
+      mmTimeLeft = Math.max(0, Math.round((mmDeadline - Date.now()) / 1000));
       mmUpdateSessionTimer();
       flashStage(mmStage, "flash-wrong");
     }
@@ -1195,7 +1206,7 @@
 
   function generateStatement() {
     const type = pick(["income", "balance"]);
-    let lines, subtotalCandidates, signFlipCandidates;
+    let lines, subtotalCandidates, signFlipCandidates, percentCandidates;
 
     if (type === "income") {
       const revenue = randInt(5, 50) * 10;
@@ -1203,30 +1214,38 @@
       const grossProfit = revenue - cogs;
       const opex = Math.round(grossProfit * (randInt(30, 60) / 100));
       const operatingProfit = grossProfit - opex;
+      const grossMarginPct = Math.round((grossProfit / revenue) * 1000) / 10;
       lines = [
         { label: "Revenue", value: revenue },
         { label: "COGS", value: cogs },
         { label: "Gross Profit", value: grossProfit },
         { label: "Operating Expenses", value: opex },
         { label: "Operating Profit", value: operatingProfit },
+        { label: "Gross Margin %", value: grossMarginPct, isPercent: true },
       ];
       subtotalCandidates = [2, 4];
       signFlipCandidates = [1, 3];
+      percentCandidates = [5];
     } else {
       const assets = randInt(20, 200) * 10;
       const liabilities = Math.round(assets * (randInt(30, 60) / 100));
       const equity = assets - liabilities;
+      const leverageRatioPct = Math.round((liabilities / assets) * 1000) / 10;
       lines = [
         { label: "Total Assets", value: assets },
         { label: "Total Liabilities", value: liabilities },
         { label: "Total Equity", value: equity },
+        { label: "Liabilities % of Assets", value: leverageRatioPct, isPercent: true },
       ];
       subtotalCandidates = [1, 2];
       signFlipCandidates = [1];
+      percentCandidates = [3];
     }
 
-    const anomalyType = pick(["subtotal_break", "sign_flip"]);
-    const candidates = anomalyType === "subtotal_break" ? subtotalCandidates : signFlipCandidates;
+    const anomalyType = pick(["subtotal_break", "sign_flip", "percent_mismatch"]);
+    const candidates = anomalyType === "subtotal_break" ? subtotalCandidates
+      : anomalyType === "sign_flip" ? signFlipCandidates
+      : percentCandidates;
     const anomalyIndex = pick(candidates);
 
     if (anomalyType === "subtotal_break") {
@@ -1236,8 +1255,17 @@
       let newVal = Math.round(trueVal * (1 + direction * offsetPct));
       if (Math.abs(newVal - trueVal) < 5) newVal = trueVal + direction * 8;
       lines[anomalyIndex].value = newVal;
-    } else {
+    } else if (anomalyType === "sign_flip") {
       lines[anomalyIndex].value = -Math.abs(lines[anomalyIndex].value);
+    } else {
+      // percent_mismatch — shift the stated percentage away from what the
+      // other (correct) lines actually compute to, by a clear margin, while
+      // keeping it a plausible-looking positive percentage on its own.
+      const trueVal = lines[anomalyIndex].value;
+      const direction = Math.random() < 0.5 ? 1 : -1;
+      let newVal = Math.round((trueVal + direction * randInt(8, 20)) * 10) / 10;
+      if (newVal < 0) newVal = Math.round((trueVal + randInt(8, 20)) * 10) / 10;
+      lines[anomalyIndex].value = newVal;
     }
 
     return { type: type === "income" ? "Income Statement" : "Balance Sheet", lines, anomalyIndex };
@@ -1245,7 +1273,7 @@
 
   const SRF_TOTAL_TIME = 60;
   const SRF_ROUND_TIME_MS = 6000;
-  let srfTimeLeft = SRF_TOTAL_TIME, srfScore = 0, srfCurrent = null, srfInterval = null, srfRoundTimeout = null, srfRunning = false, srfLocked = false;
+  let srfTimeLeft = SRF_TOTAL_TIME, srfDeadline = 0, srfScore = 0, srfCurrent = null, srfInterval = null, srfRoundTimeout = null, srfRunning = false, srfLocked = false;
 
   const srfScoreEl = document.getElementById("srf-score");
   const srfTimeEl = document.getElementById("srf-time");
@@ -1262,7 +1290,7 @@
 
   function startSRF() {
     currentGame = "spot_the_red_flag";
-    srfScore = 0; srfTimeLeft = SRF_TOTAL_TIME; srfRunning = true; srfLocked = false;
+    srfScore = 0; srfTimeLeft = SRF_TOTAL_TIME; srfDeadline = Date.now() + SRF_TOTAL_TIME * 1000; srfRunning = true; srfLocked = false;
     srfScoreEl.textContent = "0";
     srfTimeEl.textContent = String(SRF_TOTAL_TIME);
     srfRing.style.strokeDashoffset = "0";
@@ -1274,7 +1302,7 @@
 
     clearInterval(srfInterval);
     srfInterval = setInterval(() => {
-      srfTimeLeft -= 1;
+      srfTimeLeft = Math.max(0, Math.round((srfDeadline - Date.now()) / 1000));
       srfUpdateSessionTimer();
       if (srfTimeLeft <= 0) srfEnd();
     }, 1000);
@@ -1295,9 +1323,10 @@
 
     srfList.innerHTML = "";
     srfCurrent.lines.forEach((line, i) => {
-      const row = document.createElement("div");
+      const row = document.createElement("button");
+      row.type = "button";
       row.className = "stmt-row";
-      row.innerHTML = `<span class="stmt-label">${line.label}</span><span class="stmt-value">${fmtMoney(line.value)}</span>`;
+      row.innerHTML = `<span class="stmt-label">${line.label}</span><span class="stmt-value">${line.isPercent ? line.value + "%" : fmtMoney(line.value)}</span>`;
       row.addEventListener("click", () => srfAnswer(i));
       srfList.appendChild(row);
     });
@@ -1334,7 +1363,8 @@
       pulse(srfScoreEl);
       flashStage(srfStage, "flash-correct");
     } else {
-      srfTimeLeft = Math.max(0, srfTimeLeft - 3);
+      srfDeadline -= 3000;
+      srfTimeLeft = Math.max(0, Math.round((srfDeadline - Date.now()) / 1000));
       srfUpdateSessionTimer();
       flashStage(srfStage, "flash-wrong");
     }
@@ -1387,7 +1417,7 @@
   const SS_ITEM_START_MS = 3200;
   const SS_ITEM_MIN_MS = 1200;
   const SS_ITEM_STEP_MS = 130;
-  let ssTimeLeft = SS_TOTAL_TIME, ssScore = 0, ssStreak = 0, ssCurrent = null;
+  let ssTimeLeft = SS_TOTAL_TIME, ssDeadline = 0, ssScore = 0, ssStreak = 0, ssCurrent = null;
   let ssSessionInterval = null, ssItemTimeout = null, ssRunning = false, ssLocked = false;
 
   const ssScoreEl = document.getElementById("ss-score");
@@ -1404,7 +1434,7 @@
 
   function startSS() {
     currentGame = "statement_sprint";
-    ssScore = 0; ssStreak = 0; ssTimeLeft = SS_TOTAL_TIME; ssRunning = true; ssLocked = false;
+    ssScore = 0; ssStreak = 0; ssTimeLeft = SS_TOTAL_TIME; ssDeadline = Date.now() + SS_TOTAL_TIME * 1000; ssRunning = true; ssLocked = false;
     ssScoreEl.textContent = "0";
     ssStreakEl.textContent = "0";
     ssTimeEl.textContent = String(SS_TOTAL_TIME);
@@ -1415,7 +1445,7 @@
 
     clearInterval(ssSessionInterval);
     ssSessionInterval = setInterval(() => {
-      ssTimeLeft -= 1;
+      ssTimeLeft = Math.max(0, Math.round((ssDeadline - Date.now()) / 1000));
       ssUpdateSessionTimer();
       if (ssTimeLeft <= 0) ssEnd();
     }, 1000);
@@ -1474,7 +1504,8 @@
     } else {
       ssStreak = 0;
       ssStreakEl.textContent = "0";
-      ssTimeLeft = Math.max(0, ssTimeLeft - 3);
+      ssDeadline -= 3000;
+      ssTimeLeft = Math.max(0, Math.round((ssDeadline - Date.now()) / 1000));
       ssUpdateSessionTimer();
       flashStage(ssStage, "flash-wrong");
     }
@@ -1529,7 +1560,7 @@
   }
 
   const DC_TOTAL_TIME = 60;
-  let dcTimeLeft = DC_TOTAL_TIME, dcScore = 0, dcRound = null, dcNextExpected = 0, dcInterval = null, dcRunning = false, dcLocked = false;
+  let dcTimeLeft = DC_TOTAL_TIME, dcDeadline = 0, dcScore = 0, dcRound = null, dcNextExpected = 0, dcInterval = null, dcRunning = false, dcLocked = false;
   let dcDoneCells = [];
 
   const dcScoreEl = document.getElementById("dc-score");
@@ -1548,7 +1579,7 @@
 
   function startDC() {
     currentGame = "deal_chain";
-    dcScore = 0; dcTimeLeft = DC_TOTAL_TIME; dcRunning = true;
+    dcScore = 0; dcTimeLeft = DC_TOTAL_TIME; dcDeadline = Date.now() + DC_TOTAL_TIME * 1000; dcRunning = true;
     dcScoreEl.textContent = "0";
     dcTimeEl.textContent = String(DC_TOTAL_TIME);
     dcRing.style.strokeDashoffset = "0";
@@ -1560,7 +1591,7 @@
 
     clearInterval(dcInterval);
     dcInterval = setInterval(() => {
-      dcTimeLeft -= 1;
+      dcTimeLeft = Math.max(0, Math.round((dcDeadline - Date.now()) / 1000));
       dcUpdateTimer();
       if (dcTimeLeft <= 0) dcEnd();
     }, 1000);
@@ -1584,7 +1615,8 @@
     dcGrid.innerHTML = "";
     dcLines.innerHTML = "";
     dcRound.items.forEach(item => {
-      const cell = document.createElement("div");
+      const cell = document.createElement("button");
+      cell.type = "button";
       cell.className = "dc-cell";
       cell.textContent = item.label;
       cell.dataset.correctIndex = item.correctIndex;
@@ -1631,7 +1663,8 @@
     } else {
       cell.classList.add("dc-wrong");
       setTimeout(() => cell.classList.remove("dc-wrong"), 350);
-      dcTimeLeft = Math.max(0, dcTimeLeft - 4);
+      dcDeadline -= 4000;
+      dcTimeLeft = Math.max(0, Math.round((dcDeadline - Date.now()) / 1000));
       dcUpdateTimer();
       flashStage(dcStage, "flash-wrong");
       if (dcTimeLeft <= 0) { dcLocked = true; dcEnd(); }
@@ -1680,7 +1713,7 @@
   }
 
   const CG_TOTAL_TIME = 90;
-  let cgTimeLeft = CG_TOTAL_TIME, cgScore = 0, cgRound = null, cgInterval = null, cgRunning = false;
+  let cgTimeLeft = CG_TOTAL_TIME, cgDeadline = 0, cgScore = 0, cgRound = null, cgInterval = null, cgRunning = false;
 
   const cgScoreEl = document.getElementById("cg-score");
   const cgTimeEl = document.getElementById("cg-time");
@@ -1696,7 +1729,7 @@
 
   function startCG() {
     currentGame = "comp_grid";
-    cgScore = 0; cgTimeLeft = CG_TOTAL_TIME; cgRunning = true;
+    cgScore = 0; cgTimeLeft = CG_TOTAL_TIME; cgDeadline = Date.now() + CG_TOTAL_TIME * 1000; cgRunning = true;
     cgScoreEl.textContent = "0";
     cgTimeEl.textContent = String(CG_TOTAL_TIME);
     cgRing.style.strokeDashoffset = "0";
@@ -1708,7 +1741,7 @@
 
     clearInterval(cgInterval);
     cgInterval = setInterval(() => {
-      cgTimeLeft -= 1;
+      cgTimeLeft = Math.max(0, Math.round((cgDeadline - Date.now()) / 1000));
       cgUpdateTimer();
       if (cgTimeLeft <= 0) cgEnd();
     }, 1000);
@@ -1731,7 +1764,8 @@
   function cgRenderGrid() {
     cgGrid.innerHTML = "";
     cgRound.names.forEach((name, i) => {
-      const cell = document.createElement("div");
+      const cell = document.createElement("button");
+      cell.type = "button";
       cell.className = "cg-cell";
       cell.dataset.index = i;
       cgApplyCellClasses(cell, i);
@@ -1790,7 +1824,8 @@
     } else {
       invalidIndices.forEach(i => cgGrid.querySelector(`[data-index="${i}"]`).classList.add("cg-invalid"));
       setTimeout(() => invalidIndices.forEach(i => cgGrid.querySelector(`[data-index="${i}"]`)?.classList.remove("cg-invalid")), 700);
-      cgTimeLeft = Math.max(0, cgTimeLeft - 4);
+      cgDeadline -= 4000;
+      cgTimeLeft = Math.max(0, Math.round((cgDeadline - Date.now()) / 1000));
       cgUpdateTimer();
       flashStage(cgStage, "flash-wrong");
       cgMsg.textContent = "Some rows or columns are off — check the highlighted cells.";
@@ -1848,7 +1883,7 @@
   }
 
   const RL_TOTAL_TIME = 75;
-  let rlTimeLeft = RL_TOTAL_TIME, rlScore = 0, rlRound = null, rlInterval = null, rlRunning = false, rlLocked = false;
+  let rlTimeLeft = RL_TOTAL_TIME, rlDeadline = 0, rlScore = 0, rlRound = null, rlInterval = null, rlRunning = false, rlLocked = false;
 
   const rlScoreEl = document.getElementById("rl-score");
   const rlTimeEl = document.getElementById("rl-time");
@@ -1872,7 +1907,7 @@
 
   function startRL() {
     currentGame = "ratio_ladder";
-    rlScore = 0; rlTimeLeft = RL_TOTAL_TIME; rlRunning = true; rlLocked = false;
+    rlScore = 0; rlTimeLeft = RL_TOTAL_TIME; rlDeadline = Date.now() + RL_TOTAL_TIME * 1000; rlRunning = true; rlLocked = false;
     rlScoreEl.textContent = "0";
     rlTimeEl.textContent = String(RL_TOTAL_TIME);
     rlRing.style.strokeDashoffset = "0";
@@ -1884,7 +1919,7 @@
 
     clearInterval(rlInterval);
     rlInterval = setInterval(() => {
-      rlTimeLeft -= 1;
+      rlTimeLeft = Math.max(0, Math.round((rlDeadline - Date.now()) / 1000));
       rlUpdateTimer();
       if (rlTimeLeft <= 0) rlEnd();
     }, 1000);
@@ -1955,7 +1990,8 @@
       }, 700);
     } else if (rlRound.movesUsed >= rlRound.moveBudget) {
       rlLocked = true;
-      rlTimeLeft = Math.max(0, rlTimeLeft - 5);
+      rlDeadline -= 5000;
+      rlTimeLeft = Math.max(0, Math.round((rlDeadline - Date.now()) / 1000));
       rlUpdateTimer();
       flashStage(rlStage, "flash-wrong");
       setTimeout(() => {
@@ -2007,7 +2043,7 @@
 
   const SP_TOTAL_TIME = 75;
   const SP_STAGE_MS = 8000;
-  let spTimeLeft = SP_TOTAL_TIME, spScore = 0, spRound = null, spInterval = null, spStageTimeout = null, spRunning = false, spLocked = false;
+  let spTimeLeft = SP_TOTAL_TIME, spDeadline = 0, spScore = 0, spRound = null, spInterval = null, spStageTimeout = null, spRunning = false, spLocked = false;
 
   const spScoreEl = document.getElementById("sp-score");
   const spTimeEl = document.getElementById("sp-time");
@@ -2027,7 +2063,7 @@
 
   function startSP() {
     currentGame = "sector_pinpoint";
-    spScore = 0; spTimeLeft = SP_TOTAL_TIME; spRunning = true; spLocked = false;
+    spScore = 0; spTimeLeft = SP_TOTAL_TIME; spDeadline = Date.now() + SP_TOTAL_TIME * 1000; spRunning = true; spLocked = false;
     spScoreEl.textContent = "0";
     spTimeEl.textContent = String(SP_TOTAL_TIME);
     spRing.style.strokeDashoffset = "0";
@@ -2039,7 +2075,7 @@
 
     clearInterval(spInterval);
     spInterval = setInterval(() => {
-      spTimeLeft -= 1;
+      spTimeLeft = Math.max(0, Math.round((spDeadline - Date.now()) / 1000));
       spUpdateSessionTimer();
       if (spTimeLeft <= 0) spEnd();
     }, 1000);
@@ -2127,7 +2163,8 @@
       pulse(spScoreEl);
       flashStage(spStage, "flash-correct");
     } else {
-      spTimeLeft = Math.max(0, spTimeLeft - 3);
+      spDeadline -= 3000;
+      spTimeLeft = Math.max(0, Math.round((spDeadline - Date.now()) / 1000));
       spUpdateSessionTimer();
       flashStage(spStage, "flash-wrong");
     }
