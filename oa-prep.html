@@ -158,7 +158,7 @@
   // soon" tile until its practice screen actually exists, so there are no
   // dead links. Numerical Reasoning is next up to be built.
   const CATEGORIES = [
-    { key: "numerical", name: "Numerical Reasoning", desc: "Percentages, ratios, data tables, chart reading, and multi-step word problems.", active: false },
+    { key: "numerical", name: "Numerical Reasoning", desc: "Percentages, ratios, data tables, chart reading, and multi-step word problems.", active: true, href: "oa-numerical.html" },
     { key: "verbal", name: "Verbal Reasoning", desc: "True/False/Cannot Say passages and inference-based questions.", active: false },
     { key: "logical", name: "Logical / Inductive Reasoning", desc: "Sequences and abstract pattern-matching.", active: false },
     { key: "sjt", name: "Situational Judgement", desc: "Scenario + best-practice reasoning, cheat-sheet style rather than drilled.", active: false },
@@ -216,6 +216,11 @@
     } catch (e) {
       console.warn("Couldn't load OA Prep stats:", e);
     }
+
+    document.querySelectorAll(".cat-card.active").forEach(card => {
+      const cat = CATEGORIES.find(c => c.key === card.dataset.cat);
+      if (cat && cat.href) card.addEventListener("click", () => { window.location.href = cat.href; });
+    });
   }
 </script>
 </body>
