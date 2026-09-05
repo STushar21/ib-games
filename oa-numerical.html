@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,600;0,8..60,700;1,8..60,600;1,8..60,700&family=IBM+Plex+Mono:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Reps — Numerical Reasoning</title>
+<style>
+  :root {
+    --bg: #F7F3EA; --surface: #FFFFFF; --surface-alt: #F1EBDC; --border: #E3DAC4;
+    --ink: #21283B; --ink-soft: #5B6472; --ink-faint: #948E7A;
+    --gold: #A8843F; --gold-dim: #8C6A28; --gold-soft: rgba(168,132,63,0.10);
+    --green: #2F6B4F; --green-soft: rgba(47,107,79,0.10);
+    --red: #A6453B; --red-soft: rgba(166,69,59,0.10);
+    --steel: #4F6B8A; --steel-soft: rgba(79,107,138,0.10);
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    max-width: min(760px, 94vw); margin: 32px auto 60px; padding: 0 16px;
+  }
+  h1 { font-family: 'Source Serif 4', Georgia, serif; font-weight: 700; font-size: 24px; margin: 0 0 4px; }
+  .kicker {
+    display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--gold-dim);
+    letter-spacing: 0.18em; text-transform: uppercase; font-weight: 600; margin-bottom: 10px;
+  }
+  .kicker::before { content: ""; width: 22px; height: 1px; background: var(--gold-dim); display: inline-block; }
+  .sub { color: var(--ink-soft); font-size: 13px; margin-bottom: 22px; }
+
+  .top-nav {
+    position: sticky; top: 16px; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 6px 6px 6px 4px; margin: 0 0 26px; box-shadow: 0 2px 14px rgba(33,40,59,0.05);
+  }
+  .top-nav .nav-left { display: flex; align-items: center; gap: 2px; }
+  .top-nav .brand {
+    font-family: 'Source Serif 4', Georgia, serif; font-weight: 700; font-size: 13px; color: var(--gold);
+    padding: 8px 14px; text-decoration: none; letter-spacing: 0.14em; text-transform: uppercase;
+    border-right: 1px solid var(--border); margin-right: 4px;
+  }
+  .top-nav a.nav-link { padding: 8px 15px; border-radius: 5px; font-size: 12.5px; font-weight: 600; color: var(--ink-soft); text-decoration: none; }
+  .top-nav a.nav-link.active { background: var(--gold-soft); color: var(--gold); border-bottom: 2px solid var(--gold); }
+
+  .logout-bar { display: flex; justify-content: flex-end; margin-bottom: 12px; }
+  #logout-btn { background: none; border: 1px solid var(--border); color: var(--ink-soft); font-size: 11.5px; font-weight: 600; padding: 7px 14px; border-radius: 5px; cursor: pointer; }
+  .back-link { display: inline-block; margin-bottom: 14px; font-size: 12px; color: var(--ink-soft); text-decoration: none; }
+  .back-link:hover { color: var(--gold-dim); }
+
+  #login-gate { max-width: 340px; margin: 80px auto; text-align: center; }
+  #login-gate .mark { font-family: 'Source Serif 4', Georgia, serif; font-weight: 700; font-size: 15px; color: var(--gold); letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 18px; }
+  #login-gate h2 { font-family: 'Source Serif 4', Georgia, serif; font-size: 19px; margin-bottom: 6px; }
+  #login-gate input { width: 100%; margin-bottom: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 5px; padding: 11px 12px; font-size: 13.5px; font-family: inherit; color: var(--ink); }
+  #login-btn { width: 100%; background: var(--gold); color: var(--bg); border: none; border-radius: 999px; padding: 12px; font-weight: 700; cursor: pointer; margin-top: 2px; }
+
+  .drill-cta {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 22px 24px; margin-bottom: 22px; box-shadow: 0 1px 8px rgba(33,40,59,0.04);
+    display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  }
+  .drill-cta .txt h2 { font-family: 'Source Serif 4', Georgia, serif; font-size: 17px; margin: 0 0 4px; }
+  .drill-cta .txt p { font-size: 12px; color: var(--ink-soft); margin: 0; }
+  #start-drill-btn { background: var(--gold); color: var(--bg); border: none; border-radius: 999px; padding: 13px 26px; font-weight: 700; cursor: pointer; font-size: 13.5px; white-space: nowrap; }
+
+  .subskill-list { display: flex; flex-direction: column; gap: 8px; }
+  .subskill-row {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 7px;
+    padding: 14px 18px; box-shadow: 0 1px 6px rgba(33,40,59,0.03);
+  }
+  .subskill-row.locked { opacity: 0.5; }
+  .subskill-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .subskill-name { font-size: 13.5px; font-weight: 600; }
+  .subskill-meta { font-size: 11px; color: var(--ink-faint); font-family: 'IBM Plex Mono', monospace; }
+  .accuracy-track { height: 6px; background: var(--surface-alt); border-radius: 4px; overflow: hidden; }
+  .accuracy-fill { height: 100%; background: var(--gold); border-radius: 4px; }
+  .soon-tag { font-size: 10px; font-weight: 700; color: var(--ink-faint); border: 1px solid var(--border); padding: 2px 8px; border-radius: 20px; }
+
+  /* --- drill screen --- */
+  #drill-screen, #summary-screen { display: none; }
+  .drill-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+  .drill-progress { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--ink-faint); }
+  .drill-timer { font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 700; color: var(--gold); }
+  .drill-timer.low { color: var(--red); }
+  .drill-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 40px 26px; text-align: center; box-shadow: 0 1px 10px rgba(33,40,59,0.04);
+  }
+  .drill-subskill-tag { font-size: 10px; font-weight: 700; color: var(--gold); background: var(--gold-soft); padding: 3px 10px; border-radius: 20px; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 16px; display: inline-block; }
+  .drill-question { font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; font-weight: 700; margin-bottom: 24px; }
+  .drill-answer-row { display: flex; gap: 10px; justify-content: center; margin-bottom: 6px; }
+  #drill-answer-input { background: var(--bg); border: 1px solid var(--border); border-radius: 5px; padding: 12px 16px; font-size: 17px; font-family: 'IBM Plex Mono', monospace; font-weight: 600; width: 160px; text-align: center; color: var(--ink); }
+  #drill-answer-input:focus { outline: none; border-color: var(--gold-dim); }
+  #drill-submit-btn { background: var(--gold); color: var(--bg); border: none; border-radius: 999px; padding: 12px 24px; font-weight: 700; cursor: pointer; font-size: 13.5px; }
+
+  .drill-feedback { margin-top: 22px; padding: 16px 18px; border-radius: 7px; text-align: left; }
+  .drill-feedback.correct { background: var(--green-soft); border: 1px solid var(--green); }
+  .drill-feedback.wrong { background: var(--red-soft); border: 1px solid var(--red); }
+  .drill-feedback .verdict { font-weight: 700; font-size: 13px; margin-bottom: 6px; }
+  .drill-feedback.correct .verdict { color: var(--green); }
+  .drill-feedback.wrong .verdict { color: var(--red); }
+  .drill-feedback .explanation { font-size: 12.5px; color: var(--ink-soft); line-height: 1.55; }
+  #drill-next-btn { background: var(--ink); color: var(--bg); border: none; border-radius: 999px; padding: 11px 22px; font-weight: 700; cursor: pointer; font-size: 13px; margin-top: 16px; }
+
+  #summary-screen { text-align: center; padding: 20px 0; }
+  #summary-screen .score { font-family: 'IBM Plex Mono', monospace; font-size: 44px; font-weight: 700; color: var(--gold); margin: 10px 0; }
+  #summary-screen button { border: none; border-radius: 999px; padding: 12px 22px; font-weight: 700; cursor: pointer; font-size: 13px; margin: 0 6px; }
+  #summary-screen .primary { background: var(--gold); color: var(--bg); }
+  #summary-screen .secondary { background: transparent; border: 1px solid var(--border); color: var(--ink-soft); }
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <div class="nav-left">
+    <a href="games.html" class="brand">Reps</a>
+    <a href="games.html" class="nav-link">Games</a>
+    <a href="oa-prep.html" class="nav-link active">OA Prep</a>
+  </div>
+</nav>
+
+<div id="login-gate">
+  <div class="mark">Reps</div>
+  <h2>Locked</h2>
+  <div class="sub">Sign in to practice.</div>
+  <div style="margin-top:22px;">
+    <input type="email" id="login-email" placeholder="Email">
+    <input type="password" id="login-password" placeholder="Password">
+    <button type="button" id="login-btn">Sign in</button>
+    <div id="login-error" style="display:none; color:var(--red); font-size:12px; margin-top:8px;"></div>
+  </div>
+</div>
+
+<div id="app-content" style="display:none;">
+<div class="logout-bar"><button id="logout-btn" type="button">Sign out</button></div>
+
+<a href="oa-prep.html" class="back-link">&larr; OA Prep</a>
+
+<div id="landing-screen">
+  <div class="kicker">Numerical Reasoning</div>
+  <h1>Percentages, ratios, and quick calculation</h1>
+  <div class="sub">Daily Drill adaptively weights questions toward whichever sub-skill you're weakest in.</div>
+
+  <div class="drill-cta">
+    <div class="txt">
+      <h2>Daily Drill</h2>
+      <p>5 questions, ~75 seconds each, mixed across active sub-skills.</p>
+    </div>
+    <button type="button" id="start-drill-btn">Start Drill</button>
+  </div>
+
+  <div class="subskill-list" id="subskill-list"></div>
+</div>
+
+<div id="drill-screen">
+  <div class="drill-head">
+    <span class="drill-progress" id="drill-progress">Question 1 of 5</span>
+    <span class="drill-timer" id="drill-timer">75</span>
+  </div>
+  <div class="drill-card">
+    <span class="drill-subskill-tag" id="drill-subskill-tag"></span>
+    <div class="drill-question" id="drill-question"></div>
+    <div class="drill-answer-row">
+      <input type="text" id="drill-answer-input" inputmode="decimal" placeholder="Answer" autocomplete="off">
+      <button type="button" id="drill-submit-btn">Submit</button>
+    </div>
+    <div class="drill-feedback" id="drill-feedback" style="display:none;">
+      <div class="verdict" id="drill-verdict"></div>
+      <div class="explanation" id="drill-explanation"></div>
+      <button type="button" id="drill-next-btn">Next question →</button>
+    </div>
+  </div>
+</div>
+
+<div id="summary-screen">
+  <div class="kicker" style="justify-content:center;">Drill complete</div>
+  <h1>Session score</h1>
+  <div class="score" id="summary-score">0 / 5</div>
+  <div class="sub" id="summary-breakdown"></div>
+  <button type="button" class="primary" id="summary-again-btn">Do another drill</button>
+  <button type="button" class="secondary" id="summary-back-btn">Back to Numerical Reasoning</button>
+</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const sb = window.supabase.createClient(
+    "https://zkwrqdpumffwrkedhkch.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inprd3JxZHB1bWZmd3JrZWRoa2NoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyNTE1MzUsImV4cCI6MjEwMzgyNzUzNX0.x4FT30VdOp1dvQ67citcjn3Cfm2ZD3JwVNuKFmKXr0w"
+  );
+
+  sb.auth.onAuthStateChange((event, session) => {
+    document.getElementById("login-gate").style.display = session ? "none" : "block";
+    document.getElementById("app-content").style.display = session ? "block" : "none";
+    if (session) loadSubskillStats();
+  });
+  document.getElementById("login-btn").addEventListener("click", async () => {
+    const email = document.getElementById("login-email").value.trim();
+    const password = document.getElementById("login-password").value;
+    const errEl = document.getElementById("login-error");
+    errEl.style.display = "none";
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) { errEl.textContent = error.message; errEl.style.display = "block"; }
+  });
+  document.getElementById("login-password").addEventListener("keydown", (e) => { if (e.key === "Enter") document.getElementById("login-btn").click(); });
+  document.getElementById("logout-btn").addEventListener("click", async () => { await sb.auth.signOut(); });
+
+  function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+  function pick(arr) { return arr[randInt(0, arr.length - 1)]; }
+
+  // =====================================================================
+  // Sub-skills — only the two procedurally-generatable ones are active.
+  // The other three need real hand-authored content (data tables, charts,
+  // multi-step word problems) and aren't built yet.
+  // =====================================================================
+  const SUBSKILLS = [
+    { key: "percentages_ratios", name: "Percentages & Ratios", active: true },
+    { key: "quick_calc", name: "Quick Multiplication / Division", active: true },
+    { key: "data_tables", name: "Data Table Interpretation", active: false },
+    { key: "chart_reading", name: "Chart / Graph Reading", active: false },
+    { key: "word_problems", name: "Multi-step Word Problems", active: false },
+  ];
+  const ACTIVE_KEYS = SUBSKILLS.filter(s => s.active).map(s => s.key);
+
+  // --- Question generators (procedural, infinite variety) ---
+  function genPercentOf() {
+    const p = pick([5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90]);
+    function gcd(a,b){return b===0?a:gcd(b,a%b);}
+    const step = 100 / gcd(p, 100);
+    const base = step * randInt(2, Math.floor(400/step));
+    const answer = Math.round((base*p)/100);
+    return {
+      text: `What is ${p}% of ${base}?`,
+      answer,
+      explanation: `${p}% of ${base} = (${p}/100) × ${base} = ${answer}.`
+    };
+  }
+  function genPercentChange() {
+    const oldVal = randInt(4, 40) * 10;
+    const p = pick([5,10,15,20,25,30,40,50]);
+    const direction = Math.random() < 0.7 ? 1 : -1;
+    const newVal = Math.round(oldVal * (1 + direction*p/100));
+    const verb = direction > 0 ? "increases" : "decreases";
+    return {
+      text: `A value ${verb} from ${oldVal} to ${newVal}. What is the percentage ${direction>0?"increase":"decrease"}?`,
+      answer: p,
+      explanation: `% change = |${newVal} − ${oldVal}| / ${oldVal} × 100 = ${Math.abs(newVal-oldVal)} / ${oldVal} × 100 = ${p}%.`
+    };
+  }
+  function genRatioSplit() {
+    const ratios = [[1,2],[2,3],[3,4],[1,3],[3,5],[2,5],[1,4],[5,7]];
+    const [a,b] = pick(ratios);
+    const parts = randInt(3, 12);
+    const total = (a+b) * parts;
+    const answer = a * parts;
+    return {
+      text: `A total of ${total} is split in a ${a}:${b} ratio between A and B. How much does A receive?`,
+      answer,
+      explanation: `Total parts = ${a}+${b} = ${a+b}. Each part = ${total}/${a+b} = ${parts}. A's share = ${a} parts = ${a} × ${parts} = ${answer}.`
+    };
+  }
+  function genMultiply() {
+    const easy = Math.random() < 0.5;
+    const x = easy ? randInt(6,19) : randInt(12,29);
+    const y = easy ? randInt(6,19) : randInt(6,19);
+    const answer = x*y;
+    return { text: `${x} × ${y}?`, answer, explanation: `${x} × ${y} = ${answer}.` };
+  }
+  function genDivide() {
+    const d = randInt(4, 25);
+    const q = randInt(6, 40);
+    const n = d*q;
+    return { text: `${n} ÷ ${d}?`, answer: q, explanation: `${d} × ${q} = ${n}, so ${n} ÷ ${d} = ${q}.` };
+  }
+
+  const GENERATORS = {
+    percentages_ratios: [genPercentOf, genPercentChange, genRatioSplit],
+    quick_calc: [genMultiply, genDivide],
+  };
+
+  function generateQuestion(subskillKey) {
+    const gen = pick(GENERATORS[subskillKey]);
+    return { ...gen(), subskillKey };
+  }
+
+  // =====================================================================
+  // Sub-skill stats (accuracy bars on the landing screen)
+  // =====================================================================
+  async function loadSubskillStats() {
+    const list = document.getElementById("subskill-list");
+    list.innerHTML = SUBSKILLS.map(s => `
+      <div class="subskill-row ${s.active ? "" : "locked"}">
+        <div class="subskill-top">
+          <span class="subskill-name">${s.name}</span>
+          <span class="subskill-meta" id="meta-${s.key}">${s.active ? "—" : ""}</span>
+          ${s.active ? "" : '<span class="soon-tag">Coming soon</span>'}
+        </div>
+        ${s.active ? `<div class="accuracy-track"><div class="accuracy-fill" id="fill-${s.key}" style="width:0%"></div></div>` : ""}
+      </div>
+    `).join("");
+
+    try {
+      const { data: userData } = await sb.auth.getUser();
+      const userId = userData?.user?.id;
+      if (!userId) return;
+      const { data, error } = await sb.from("oa_attempts").select("sub_skill, correct").eq("user_id", userId).eq("category", "numerical");
+      if (error) { console.warn(error.message); return; }
+
+      ACTIVE_KEYS.forEach(key => {
+        const rows = (data || []).filter(r => r.sub_skill === key);
+        const metaEl = document.getElementById("meta-" + key);
+        const fillEl = document.getElementById("fill-" + key);
+        if (rows.length === 0) { metaEl.textContent = "Not started"; return; }
+        const acc = Math.round((rows.filter(r => r.correct).length / rows.length) * 100);
+        metaEl.textContent = `${acc}% · ${rows.length} done`;
+        fillEl.style.width = acc + "%";
+      });
+    } catch (e) { console.warn(e); }
+  }
+
+  // =====================================================================
+  // Adaptive weighting — no-attempts sub-skills get top priority, then
+  // lower accuracy gets higher weight, with a floor so mastered sub-skills
+  // still occasionally show up.
+  // =====================================================================
+  async function pickWeightedSubskills(count) {
+    let weights = {};
+    ACTIVE_KEYS.forEach(k => weights[k] = 1);
+    try {
+      const { data: userData } = await sb.auth.getUser();
+      const userId = userData?.user?.id;
+      if (userId) {
+        const { data } = await sb.from("oa_attempts").select("sub_skill, correct").eq("user_id", userId).eq("category", "numerical");
+        ACTIVE_KEYS.forEach(key => {
+          const rows = (data || []).filter(r => r.sub_skill === key);
+          if (rows.length === 0) { weights[key] = 1.0; return; }
+          const acc = rows.filter(r => r.correct).length / rows.length;
+          weights[key] = Math.max(0.15, 1 - acc);
+        });
+      }
+    } catch (e) { console.warn(e); }
+
+    const totalWeight = Object.values(weights).reduce((a,b) => a+b, 0);
+    const picks = [];
+    for (let i = 0; i < count; i++) {
+      let r = Math.random() * totalWeight;
+      for (const key of ACTIVE_KEYS) {
+        r -= weights[key];
+        if (r <= 0) { picks.push(key); break; }
+      }
+      if (picks.length <= i) picks.push(ACTIVE_KEYS[ACTIVE_KEYS.length - 1]);
+    }
+    return picks;
+  }
+
+  // =====================================================================
+  // Drill flow
+  // =====================================================================
+  const DRILL_SIZE = 5;
+  const QUESTION_TIME = 75;
+  let drillQueue = [], drillIndex = 0, drillScore = 0, drillResults = [];
+  let currentQuestion = null, questionStartTime = 0, drillTimerInterval = null, drillTimeLeft = QUESTION_TIME, answered = false;
+
+  document.getElementById("start-drill-btn").addEventListener("click", startDrill);
+  document.getElementById("summary-again-btn").addEventListener("click", startDrill);
+  document.getElementById("summary-back-btn").addEventListener("click", () => showScreen("landing-screen"));
+
+  function showScreen(id) {
+    ["landing-screen", "drill-screen", "summary-screen"].forEach(s => {
+      document.getElementById(s).style.display = s === id ? "block" : "none";
+    });
+    if (id === "landing-screen") loadSubskillStats();
+  }
+
+  async function startDrill() {
+    drillQueue = await pickWeightedSubskills(DRILL_SIZE);
+    drillIndex = 0;
+    drillScore = 0;
+    drillResults = [];
+    showScreen("drill-screen");
+    showQuestion();
+  }
+
+  function showQuestion() {
+    answered = false;
+    document.getElementById("drill-progress").textContent = `Question ${drillIndex+1} of ${DRILL_SIZE}`;
+    currentQuestion = generateQuestion(drillQueue[drillIndex]);
+    const subName = SUBSKILLS.find(s => s.key === currentQuestion.subskillKey).name;
+    document.getElementById("drill-subskill-tag").textContent = subName;
+    document.getElementById("drill-question").textContent = currentQuestion.text;
+    document.getElementById("drill-answer-input").value = "";
+    document.getElementById("drill-answer-input").disabled = false;
+    document.getElementById("drill-submit-btn").disabled = false;
+    document.getElementById("drill-feedback").style.display = "none";
+    document.getElementById("drill-answer-input").focus();
+
+    questionStartTime = Date.now();
+    drillTimeLeft = QUESTION_TIME;
+    const deadline = Date.now() + QUESTION_TIME * 1000;
+    const timerEl = document.getElementById("drill-timer");
+    timerEl.textContent = String(QUESTION_TIME);
+    timerEl.classList.remove("low");
+
+    clearInterval(drillTimerInterval);
+    drillTimerInterval = setInterval(() => {
+      drillTimeLeft = Math.max(0, Math.round((deadline - Date.now())/1000));
+      timerEl.textContent = String(drillTimeLeft);
+      timerEl.classList.toggle("low", drillTimeLeft <= 15);
+      if (drillTimeLeft <= 0) { clearInterval(drillTimerInterval); submitAnswer(true); }
+    }, 250);
+  }
+
+  async function submitAnswer(timedOut) {
+    if (answered) return;
+    answered = true;
+    clearInterval(drillTimerInterval);
+    document.getElementById("drill-answer-input").disabled = true;
+    document.getElementById("drill-submit-btn").disabled = true;
+
+    const raw = document.getElementById("drill-answer-input").value.trim();
+    const val = parseFloat(raw);
+    const correct = !timedOut && !Number.isNaN(val) && Math.round(val) === currentQuestion.answer;
+    const elapsed = Math.round((Date.now() - questionStartTime) / 1000);
+
+    if (correct) drillScore += 1;
+    drillResults.push({ subskillKey: currentQuestion.subskillKey, correct });
+
+    const fb = document.getElementById("drill-feedback");
+    fb.className = "drill-feedback " + (correct ? "correct" : "wrong");
+    fb.style.display = "block";
+    document.getElementById("drill-verdict").textContent = correct ? "Correct" : (timedOut ? "Time's up — correct answer:" : "Not quite — correct answer:");
+    document.getElementById("drill-explanation").textContent = correct
+      ? currentQuestion.explanation
+      : `${currentQuestion.answer}. ${currentQuestion.explanation}`;
+
+    try {
+      const { data: userData } = await sb.auth.getUser();
+      const userId = userData?.user?.id;
+      if (userId) {
+        await sb.from("oa_attempts").insert([{
+          user_id: userId, category: "numerical", sub_skill: currentQuestion.subskillKey,
+          correct, time_taken_seconds: elapsed, mode: "drill"
+        }]);
+      }
+    } catch (e) { console.warn("Couldn't log attempt:", e); }
+  }
+
+  document.getElementById("drill-submit-btn").addEventListener("click", () => submitAnswer(false));
+  document.getElementById("drill-answer-input").addEventListener("keydown", (e) => { if (e.key === "Enter") submitAnswer(false); });
+
+  document.getElementById("drill-next-btn").addEventListener("click", () => {
+    drillIndex += 1;
+    if (drillIndex >= DRILL_SIZE) { showSummary(); return; }
+    showQuestion();
+  });
+
+  function showSummary() {
+    showScreen("summary-screen");
+    document.getElementById("summary-score").textContent = `${drillScore} / ${DRILL_SIZE}`;
+    const bySkill = {};
+    drillResults.forEach(r => {
+      bySkill[r.subskillKey] = bySkill[r.subskillKey] || { correct: 0, total: 0 };
+      bySkill[r.subskillKey].total += 1;
+      if (r.correct) bySkill[r.subskillKey].correct += 1;
+    });
+    const lines = Object.entries(bySkill).map(([key, v]) => {
+      const name = SUBSKILLS.find(s => s.key === key).name;
+      return `${name}: ${v.correct}/${v.total}`;
+    });
+    document.getElementById("summary-breakdown").textContent = lines.join(" · ");
+  }
+</script>
+</body>
+</html>
