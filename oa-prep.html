@@ -158,11 +158,11 @@
   // soon" tile until its practice screen actually exists, so there are no
   // dead links. Numerical Reasoning is next up to be built.
   const CATEGORIES = [
-    { key: "numerical", name: "Numerical Reasoning", desc: "Percentages, ratios, data tables, chart reading, and multi-step word problems.", active: true, href: "oa-numerical.html" },
-    { key: "verbal", name: "Verbal Reasoning", desc: "True/False/Cannot Say passages and inference-based questions.", active: true, href: "oa-verbal.html" },
-    { key: "logical", name: "Logical / Inductive Reasoning", desc: "Number sequences and abstract pattern-matching.", active: true, href: "oa-logical.html" },
-    { key: "sjt", name: "Situational Judgement", desc: "Scenario + best-practice reasoning, cheat-sheet style rather than drilled.", active: false },
-    { key: "gamified", name: "Gamified / Cognitive", desc: "What to expect from Pymetrics-style assessments, and how not to overthink them.", active: false },
+    { key: "numerical", name: "Numerical Reasoning", desc: "Percentages, ratios, data tables, chart reading, and multi-step word problems.", active: true, href: "oa-numerical.html", type: "drill" },
+    { key: "verbal", name: "Verbal Reasoning", desc: "True/False/Cannot Say passages and inference-based questions.", active: true, href: "oa-verbal.html", type: "drill" },
+    { key: "logical", name: "Logical / Inductive Reasoning", desc: "Number sequences and abstract pattern-matching.", active: true, href: "oa-logical.html", type: "drill" },
+    { key: "sjt", name: "Situational Judgement", desc: "Scenario + best-practice reasoning, cheat-sheet style rather than drilled.", active: true, href: "oa-sjt.html", type: "reference" },
+    { key: "gamified", name: "Gamified / Cognitive", desc: "What to expect from Pymetrics-style assessments, and how not to overthink them.", active: false, type: "reference" },
   ];
 
   function relativeDate(iso) {
@@ -175,21 +175,26 @@
 
   async function loadCategories() {
     const grid = document.getElementById("cat-grid");
-    grid.innerHTML = CATEGORIES.map(cat => `
-      <div class="cat-card ${cat.active ? "active" : "locked"}" data-cat="${cat.key}">
-        <span class="cat-tag ${cat.active ? "" : "soon"}">${cat.active ? "Practice" : "Coming soon"}</span>
-        <div class="cat-name">${cat.name}</div>
-        <div class="cat-desc">${cat.desc}</div>
-        <div class="cat-stats">
-          <div class="cat-stat"><div class="label">Accuracy</div><div class="value dim" id="acc-${cat.key}">—</div></div>
-          <div class="cat-stat"><div class="label">Completed</div><div class="value dim" id="count-${cat.key}">—</div></div>
-          <div class="cat-stat"><div class="label">Last practiced</div><div class="value dim" id="last-${cat.key}">—</div></div>
-        </div>
-      </div>
-    `).join("");
+    grid.innerHTML = CATEGORIES.map(cat => {
+      const tag = cat.active ? (cat.type === "reference" ? "Browse" : "Practice") : "Coming soon";
+      const statsHtml = cat.type === "reference"
+        ? `<div class="cat-stats"><div class="cat-stat"><div class="label">Format</div><div class="value dim">Reference, not scored</div></div></div>`
+        : `<div class="cat-stats">
+             <div class="cat-stat"><div class="label">Accuracy</div><div class="value dim" id="acc-${cat.key}">—</div></div>
+             <div class="cat-stat"><div class="label">Completed</div><div class="value dim" id="count-${cat.key}">—</div></div>
+             <div class="cat-stat"><div class="label">Last practiced</div><div class="value dim" id="last-${cat.key}">—</div></div>
+           </div>`;
+      return `
+        <div class="cat-card ${cat.active ? "active" : "locked"}" data-cat="${cat.key}">
+          <span class="cat-tag ${cat.active ? "" : "soon"}">${tag}</span>
+          <div class="cat-name">${cat.name}</div>
+          <div class="cat-desc">${cat.desc}</div>
+          ${statsHtml}
+        </div>`;
+    }).join("");
 
-    // One query for all attempts, aggregated client-side per category —
-    // avoids five separate round trips for a page this small.
+    // One query for all attempts, aggregated client-side per drill category —
+    // reference categories (SJT, Gamified) aren't scored so they're skipped here.
     try {
       const { data: userData } = await sb.auth.getUser();
       const userId = userData?.user?.id;
@@ -197,7 +202,7 @@
       const { data, error } = await sb.from("oa_attempts").select("category, correct, created_at").eq("user_id", userId);
       if (error) { console.warn("Couldn't load OA Prep stats:", error.message); return; }
 
-      CATEGORIES.forEach(cat => {
+      CATEGORIES.filter(c => c.type !== "reference").forEach(cat => {
         const rows = (data || []).filter(r => r.category === cat.key);
         const accEl = document.getElementById("acc-" + cat.key);
         const countEl = document.getElementById("count-" + cat.key);
