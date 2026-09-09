@@ -246,9 +246,9 @@
   const SUBSKILLS = [
     { key: "percentages_ratios", name: "Percentages & Ratios", active: true, source: "procedural" },
     { key: "quick_calc", name: "Quick Multiplication / Division", active: true, source: "procedural" },
-    { key: "data_tables", name: "Data Table Interpretation", active: true, source: "bank" },
-    { key: "chart_reading", name: "Chart / Graph Reading", active: true, source: "bank" },
-    { key: "word_problems", name: "Multi-step Word Problems", active: true, source: "bank" },
+    { key: "data_tables", name: "Data Table Interpretation", active: true, source: "procedural" },
+    { key: "chart_reading", name: "Chart / Graph Reading", active: true, source: "procedural" },
+    { key: "word_problems", name: "Multi-step Word Problems", active: true, source: "procedural" },
   ];
   const ACTIVE_KEYS = SUBSKILLS.filter(s => s.active).map(s => s.key);
   const BANK_KEYS = SUBSKILLS.filter(s => s.source === "bank").map(s => s.key);
@@ -304,48 +304,314 @@
     return { text: `${n} ÷ ${d}?`, answer: q, explanation: `${d} × ${q} = ${n}, so ${n} ÷ ${d} = ${q}.` };
   }
 
+  function shuffleArrLocal(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) { const j = randInt(0, i); [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
+  }
+  function gcdLocal(a, b) { return b === 0 ? a : gcdLocal(b, a % b); }
+  function growthStep(pct) { return 100 / gcdLocal(Math.abs(pct), 100); }
+  function mcqNumOptions(correct, spread) {
+    const set = new Set([correct]);
+    let guard = 0;
+    const multipliers = [-3,-2,-1,1,2,3,4,-4];
+    while (set.size < 4 && guard < 60) {
+      const mult = multipliers[guard % multipliers.length];
+      const d = correct + mult * spread;
+      // Only forbid negative distractors when the correct answer itself is
+      // positive (e.g. a total shouldn't offer a negative option) — when
+      // correct is itself negative or zero, negative distractors are fine.
+      if (!set.has(d) && (correct <= 0 || d > 0)) set.add(d);
+      guard++;
+    }
+    return shuffleArrLocal([...set]);
+  }
+
+  // --- Data Table Interpretation (templated: random entities/values each time) ---
+  const TABLE_THEMES = [
+    { title: "Revenue by Region ($m)", entityLabel: "region", entityPlural: "regions", pool: ["Europe","Asia","Americas","MEA","APAC"], metricLabel: "revenue" },
+    { title: "Headcount by Department", entityLabel: "department", entityPlural: "departments", pool: ["IB","PE","Asset Management","Sales & Trading","Research"], metricLabel: "headcount" },
+    { title: "Deal Volume by Sector ($bn)", entityLabel: "sector", entityPlural: "sectors", pool: ["Tech","Healthcare","Energy","Industrials","Consumer"], metricLabel: "deal volume" },
+    { title: "Client AUM ($m)", entityLabel: "client", entityPlural: "clients", pool: ["Client A","Client B","Client C","Client D","Client E"], metricLabel: "AUM" },
+    { title: "Expense Breakdown ($m)", entityLabel: "category", entityPlural: "categories", pool: ["Salaries","Rent","Marketing","Technology","Travel"], metricLabel: "expense" },
+  ];
+
+  function buildTable(forceRows) {
+    const theme = pick(TABLE_THEMES);
+    const numRows = forceRows || randInt(3, 4);
+    const labels = shuffleArrLocal(theme.pool).slice(0, numRows);
+    const col1Label = pick(["2022", "2023", "Q1"]);
+    const col2Label = col1Label === "2022" ? "2023" : col1Label === "2023" ? "2024" : "Q2";
+    const declineIdx = Math.random() < 0.6 ? randInt(0, numRows - 1) : -1;
+
+    const growthPcts = [], col1Vals = [], col2Vals = [];
+    for (let i = 0; i < numRows; i++) {
+      const g = i === declineIdx ? -pick([5,10,15,20]) : pick([5,10,15,20,25,30,35,40]);
+      const step = growthStep(g);
+      const base = step * randInt(3, 15);
+      const newVal = Math.round(base * (1 + g/100));
+      growthPcts.push(g); col1Vals.push(base); col2Vals.push(newVal);
+    }
+    return { theme, labels, col1Label, col2Label, col1Vals, col2Vals, growthPcts };
+  }
+
+  function tableQData(t) {
+    const entityHeader = t.theme.entityLabel[0].toUpperCase() + t.theme.entityLabel.slice(1);
+    return { type: "table", title: t.theme.title, headers: [entityHeader, t.col1Label, t.col2Label],
+      rows: t.labels.map((l,i) => [l, String(t.col1Vals[i]), String(t.col2Vals[i])]) };
+  }
+
+  function genTableGrowthQ() {
+    const t = buildTable();
+    const idx = randInt(0, t.labels.length - 1);
+    const correct = t.growthPcts[idx];
+    const opts = mcqNumOptions(correct, 5).map(v => v + "%");
+    return {
+      text: `What was the % growth in ${t.labels[idx]} ${t.theme.metricLabel} from ${t.col1Label} to ${t.col2Label}?`,
+      questionData: tableQData(t), options: opts, answer: correct + "%",
+      explanation: `(${t.col2Vals[idx]} − ${t.col1Vals[idx]}) / ${t.col1Vals[idx]} × 100 = ${correct}%.`
+    };
+  }
+  function genTableHighestGrowthQ() {
+    let t = buildTable(4);
+    let guard = 0;
+    while (new Set(t.growthPcts).size !== t.growthPcts.length && guard < 10) { t = buildTable(4); guard++; }
+    const maxIdx = t.growthPcts.indexOf(Math.max(...t.growthPcts));
+    return {
+      text: `Which ${t.theme.entityLabel} had the highest % growth from ${t.col1Label} to ${t.col2Label}?`,
+      questionData: tableQData(t), options: shuffleArrLocal(t.labels), answer: t.labels[maxIdx],
+      explanation: t.labels.map((l,i) => `${l}: ${t.growthPcts[i]}%`).join(", ") + `. ${t.labels[maxIdx]} is highest.`
+    };
+  }
+  function genTableDeclineQ() {
+    let t = buildTable(3);
+    let guard = 0;
+    while (!t.growthPcts.some(g => g < 0) && guard < 10) { t = buildTable(3); guard++; }
+    const declineIdx = t.growthPcts.findIndex(g => g < 0);
+    const answer = declineIdx === -1 ? "None" : t.labels[declineIdx];
+    const options = shuffleArrLocal([...t.labels, "None"]);
+    return {
+      text: `Which ${t.theme.entityLabel} saw a decline in ${t.theme.metricLabel} from ${t.col1Label} to ${t.col2Label}?`,
+      questionData: tableQData(t), options, answer,
+      explanation: t.labels.map((l,i) => `${l}: ${t.growthPcts[i] >= 0 ? "+" : ""}${t.growthPcts[i]}%`).join(", ") +
+        (declineIdx === -1 ? ". None declined." : `. Only ${answer} declined.`)
+    };
+  }
+  function genTableTotalQ() {
+    const t = buildTable();
+    const total = t.col2Vals.reduce((a,b) => a+b, 0);
+    const opts = mcqNumOptions(total, Math.max(5, Math.round(total*0.08)));
+    return {
+      text: `What was the total ${t.theme.metricLabel} across all ${t.theme.entityPlural} in ${t.col2Label}?`,
+      questionData: tableQData(t), options: opts.map(String), answer: String(total),
+      explanation: `${t.col2Vals.join(" + ")} = ${total}.`
+    };
+  }
+  function genTableContributorQ() {
+    let t = buildTable(4);
+    let increases = t.col1Vals.map((v,i) => t.col2Vals[i]-v);
+    let guard = 0;
+    while (Math.max(...increases) <= 0 && guard < 10) { t = buildTable(4); increases = t.col1Vals.map((v,i) => t.col2Vals[i]-v); guard++; }
+    const maxIdx = increases.indexOf(Math.max(...increases));
+    return {
+      text: `Which ${t.theme.entityLabel} contributed the most to the total increase in ${t.theme.metricLabel} from ${t.col1Label} to ${t.col2Label}?`,
+      questionData: tableQData(t), options: shuffleArrLocal(t.labels), answer: t.labels[maxIdx],
+      explanation: t.labels.map((l,i) => `${l}: ${increases[i] >= 0 ? "+" : ""}${increases[i]}`).join(", ") + `. ${t.labels[maxIdx]} had the largest increase.`
+    };
+  }
+  const TABLE_GENERATORS = [genTableGrowthQ, genTableHighestGrowthQ, genTableDeclineQ, genTableTotalQ, genTableContributorQ];
+
+  // --- Chart / Graph Reading (templated bar charts) ---
+  const CHART_THEMES = [
+    { title: "Quarterly Revenue ($m)", cats: ["Q1","Q2","Q3","Q4"], entityLabel: "quarter", entityPlural: "quarters" },
+    { title: "Market Share by Company (%)", cats: ["A","B","C","D"], entityLabel: "company", entityPlural: "companies", isShare: true },
+    { title: "Headcount by Office", cats: ["London","NY","HK","Singapore"], entityLabel: "office", entityPlural: "offices" },
+    { title: "Monthly Deal Count", cats: ["Jan","Feb","Mar","Apr"], entityLabel: "month", entityPlural: "months" },
+  ];
+
+  function buildChart() {
+    const theme = pick(CHART_THEMES);
+    let values;
+    if (theme.isShare) {
+      const a = pick([20,25,30,35,40]);
+      const b = pick([15,20,25]);
+      const rem = 100 - a - b;
+      const c = Math.max(5, Math.round(rem/2));
+      const d = rem - c;
+      values = shuffleArrLocal([a,b,c,d]);
+    } else {
+      values = [];
+      let v = randInt(3,10) * (theme.title.includes("Revenue") ? 5 : 2);
+      for (let i = 0; i < 4; i++) { values.push(v); v = Math.max(2, v + pick([-3,-2,2,3,4]) * (theme.title.includes("Revenue") ? 5 : 1)); }
+    }
+    return { theme, values };
+  }
+  function chartQData(c) { return { type: "bar", title: c.theme.title, categories: c.theme.cats, values: c.values }; }
+
+  function genChartChangeQ() {
+    const c = buildChart();
+    const change = c.values[3] - c.values[0];
+    const opts = mcqNumOptions(change, Math.max(3, Math.round(Math.abs(change)*0.3)+2));
+    return {
+      text: `By how much did the value change from ${c.theme.cats[0]} to ${c.theme.cats[3]}?`,
+      questionData: chartQData(c), options: opts.map(String), answer: String(change),
+      explanation: `${c.values[3]} − ${c.values[0]} = ${change}.`
+    };
+  }
+  function genChartDeclineQ() {
+    let c = buildChart();
+    function findDecline(chart) { for (let i=1;i<4;i++) { if (chart.values[i] < chart.values[i-1]) return i; } return -1; }
+    let declineIdx = findDecline(c);
+    let guard = 0;
+    while (declineIdx === -1 && guard < 10) { c = buildChart(); declineIdx = findDecline(c); guard++; }
+    const answer = declineIdx === -1 ? "None" : c.theme.cats[declineIdx];
+    const options = shuffleArrLocal([...c.theme.cats.slice(1), "None"]);
+    return {
+      text: `In which ${c.theme.entityLabel} did the value decline compared to the prior one?`,
+      questionData: chartQData(c), options, answer,
+      explanation: `${c.theme.cats.map((cat,i) => `${cat}: ${c.values[i]}`).join(", ")}. ${declineIdx === -1 ? "No decline occurs." : `${c.theme.cats[declineIdx]} (${c.values[declineIdx]}) is lower than ${c.theme.cats[declineIdx-1]} (${c.values[declineIdx-1]}).`}`
+    };
+  }
+  function genChartCombinedQ() {
+    const c = buildChart();
+    const i1 = randInt(0,3); let i2 = randInt(0,3); while (i2 === i1) i2 = randInt(0,3);
+    const sum = c.values[i1] + c.values[i2];
+    const opts = mcqNumOptions(sum, Math.max(3, Math.round(sum*0.15)));
+    return {
+      text: `What is the combined value of ${c.theme.cats[i1]} and ${c.theme.cats[i2]}?`,
+      questionData: chartQData(c), options: opts.map(v => c.theme.isShare ? v+"%" : String(v)),
+      answer: c.theme.isShare ? sum+"%" : String(sum),
+      explanation: `${c.values[i1]} + ${c.values[i2]} = ${sum}${c.theme.isShare ? "%" : ""}.`
+    };
+  }
+  function genChartDiffQ() {
+    let c = buildChart();
+    function topDiff(chart) {
+      const sorted = chart.values.map((v,i) => ({v,i})).sort((a,b) => b.v-a.v);
+      return { top: sorted[0], second: sorted[1], diff: sorted[0].v - sorted[1].v };
+    }
+    let { top, second, diff } = topDiff(c);
+    let guard = 0;
+    while (diff === 0 && guard < 10) { c = buildChart(); ({ top, second, diff } = topDiff(c)); guard++; }
+    const opts = mcqNumOptions(diff, Math.max(2, Math.round(diff*0.4)+1));
+    return {
+      text: `How much larger is ${c.theme.cats[top.i]} than ${c.theme.cats[second.i]}?`,
+      questionData: chartQData(c), options: opts.map(String), answer: String(diff),
+      explanation: `${c.values[top.i]} − ${c.values[second.i]} = ${diff}.`
+    };
+  }
+  function genChartAvgQ() {
+    const c = buildChart();
+    const sum = c.values.reduce((a,b) => a+b, 0);
+    const avg = Math.round(sum/4);
+    const opts = mcqNumOptions(avg, Math.max(2, Math.round(avg*0.15)+1));
+    return {
+      text: `What was the average value across all ${c.theme.cats.length} ${c.theme.entityPlural} shown?`,
+      questionData: chartQData(c), options: opts.map(String), answer: String(avg),
+      explanation: `(${c.values.join("+")}) / 4 = ${sum} / 4 ≈ ${avg}.`
+    };
+  }
+  const CHART_GENERATORS = [genChartChangeQ, genChartDeclineQ, genChartCombinedQ, genChartDiffQ, genChartAvgQ];
+
+  // --- Multi-step Word Problems (templated, free-text numeric) ---
+  function genWP_RevenueGrowthDecline() {
+    const base = randInt(6,25) * 10;
+    const g1 = pick([10,15,20,25,30]), g2 = pick([5,10,15,20]);
+    const v1 = Math.round(base * (1 + g1/100));
+    const v2 = Math.round(v1 * (1 - g2/100));
+    return {
+      text: `A company's revenue grows ${g1}% in Year 1, then declines ${g2}% in Year 2. If it started at $${base}m, what is the revenue at the end of Year 2 ($m)?`,
+      answer: v2,
+      explanation: `Year 1: ${base} × ${1+g1/100} = ${v1}. Year 2: ${v1} × ${1-g2/100} = ${v2}.`
+    };
+  }
+  function genWP_PagesReview() {
+    const totalPages = randInt(4,10) * 6;
+    const firstHour = Math.round(totalPages * pick([0.25,0.3,0.375,0.4]));
+    const remaining = totalPages - firstHour;
+    const hoursLeft = pick([2,3]);
+    const rate = Math.round(remaining/hoursLeft);
+    return {
+      text: `An analyst has ${1+hoursLeft} hours to review a ${totalPages}-page CIM. After reviewing ${firstHour} pages in the first hour, how many pages per hour must they review over the remaining ${hoursLeft} hours to finish on time?`,
+      answer: rate,
+      explanation: `Remaining pages = ${totalPages} − ${firstHour} = ${remaining}. Over ${hoursLeft} hours, that's ${remaining} / ${hoursLeft} = ${rate} pages/hour.`
+    };
+  }
+  function genWP_DebtEquity() {
+    const total = randInt(10,40) * 10;
+    const equity = Math.round(total * pick([30,35,40,45])/100);
+    const debt = total - equity;
+    const ratio = Math.round((debt/equity)*100)/100;
+    return {
+      text: `A PE fund buys a company for $${total}m using $${equity}m of equity and the rest debt. What is the debt-to-equity ratio?`,
+      answer: ratio,
+      explanation: `Debt = ${total} − ${equity} = ${debt}. Debt/Equity = ${debt} / ${equity} = ${ratio}.`
+    };
+  }
+  function genWP_TimeReduction() {
+    const mins = pick([30,40,45,50,60]);
+    const pct = pick([10,20,25,30]);
+    const result = Math.round(mins * (1 - pct/100));
+    return {
+      text: `A team completes an OA in ${mins} minutes at normal speed. If they aim to finish ${pct}% faster, how many minutes should it take?`,
+      answer: result,
+      explanation: `${mins} × (1 − ${pct/100}) = ${result} minutes.`
+    };
+  }
+  function genWP_COGS() {
+    const revenue = randInt(10,50) * 10;
+    const margin = pick([30,35,40,45,50]);
+    const grossProfit = Math.round(revenue * margin/100);
+    const cogs = revenue - grossProfit;
+    return {
+      text: `A company has revenue of $${revenue}m and a gross margin of ${margin}%. What is its COGS ($m)?`,
+      answer: cogs,
+      explanation: `Gross profit = ${revenue} × ${margin/100} = ${grossProfit}. COGS = ${revenue} − ${grossProfit} = ${cogs}.`
+    };
+  }
+  function genWP_CompsShortfall() {
+    const rate = pick([2,3,4]), hours = pick([4,5,6]);
+    const capacity = rate * hours;
+    const need = capacity + randInt(2,8);
+    const shortfall = need - capacity;
+    return {
+      text: `An intern reviews ${rate} comps per hour, and has ${hours} hours before a deadline. If they need to review ${need} comps, how many comps short will they be by the deadline?`,
+      answer: shortfall,
+      explanation: `Capacity = ${rate} × ${hours} = ${capacity}. Shortfall = ${need} − ${capacity} = ${shortfall}.`
+    };
+  }
+  function genWP_EquityValue() {
+    const ev = randInt(20,80) * 10;
+    const netDebt = randInt(3,20) * 10;
+    return {
+      text: `A deal has an enterprise value of $${ev}m and net debt of $${netDebt}m. What is the equity value ($m)?`,
+      answer: ev - netDebt,
+      explanation: `Equity Value = ${ev} − ${netDebt} = ${ev-netDebt}.`
+    };
+  }
+  function genWP_MOIC() {
+    const investment = randInt(5,30) * 10;
+    const moic = pick([2,2.5,3,3.5,4]);
+    const total = Math.round(investment * moic);
+    return {
+      text: `A $${investment}m investment returns a ${moic}x MOIC. What is the total value returned to investors ($m)?`,
+      answer: total,
+      explanation: `Total value = ${investment} × ${moic} = ${total}.`
+    };
+  }
+  const WORDPROBLEM_GENERATORS = [genWP_RevenueGrowthDecline, genWP_PagesReview, genWP_DebtEquity, genWP_TimeReduction, genWP_COGS, genWP_CompsShortfall, genWP_EquityValue, genWP_MOIC];
+
   const GENERATORS = {
     percentages_ratios: [genPercentOf, genPercentChange, genRatioSplit],
     quick_calc: [genMultiply, genDivide],
+    data_tables: TABLE_GENERATORS,
+    chart_reading: CHART_GENERATORS,
+    word_problems: WORDPROBLEM_GENERATORS,
   };
 
-  // --- Question bank (hand-authored: data tables, charts, word problems) ---
-  let bankCache = {};
-  let usedBankIds = new Set();
-
-  async function loadBankCache() {
-    if (BANK_KEYS.length === 0) return;
-    const { data, error } = await sb.from("oa_questions").select("*").eq("category", "numerical").in("sub_skill", BANK_KEYS);
-    bankCache = {};
-    BANK_KEYS.forEach(k => bankCache[k] = []);
-    if (error) { console.warn("Couldn't load question bank:", error.message); return; }
-    (data || []).forEach(row => { if (bankCache[row.sub_skill]) bankCache[row.sub_skill].push(row); });
-  }
-
-  function generateBankQuestion(subskillKey) {
-    const pool = bankCache[subskillKey] || [];
-    if (pool.length === 0) {
-      return { text: "No questions available yet for this sub-skill.", answer: null, explanation: "", subskillKey, options: null, questionData: null, questionId: null };
-    }
-    let candidates = pool.filter(q => !usedBankIds.has(q.id));
-    if (candidates.length === 0) { usedBankIds.clear(); candidates = pool; }
-    const row = pick(candidates);
-    usedBankIds.add(row.id);
-    return {
-      text: row.question_text,
-      answer: row.correct_answer,
-      explanation: row.explanation,
-      subskillKey,
-      options: row.options || null,
-      questionData: row.question_data || null,
-      questionId: row.id,
-    };
-  }
-
   function generateQuestion(subskillKey) {
-    if (BANK_KEYS.includes(subskillKey)) return generateBankQuestion(subskillKey);
     const gen = pick(GENERATORS[subskillKey]);
-    return { ...gen(), subskillKey, options: null, questionData: null, questionId: null };
+    return { options: null, questionData: null, questionId: null, ...gen(), subskillKey };
   }
 
   // --- Rendering question_data (tables and bar charts) ---
@@ -460,8 +726,6 @@
   }
 
   async function startDrill() {
-    usedBankIds.clear();
-    await loadBankCache();
     drillQueue = await pickWeightedSubskills(DRILL_SIZE);
     drillIndex = 0;
     drillScore = 0;
