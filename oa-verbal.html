@@ -250,14 +250,15 @@
   // multi-step word problems) and aren't built yet.
   // =====================================================================
   const SUBSKILLS = [
-    { key: "true_false_cannot_say", name: "True / False / Cannot Say", active: true, source: "bank" },
+    { key: "true_false_cannot_say", name: "True / False / Cannot Say", active: true, source: "procedural" },
     { key: "inference", name: "Inference", active: true, source: "bank" },
   ];
   const ACTIVE_KEYS = SUBSKILLS.filter(s => s.active).map(s => s.key);
   const BANK_KEYS = SUBSKILLS.filter(s => s.source === "bank").map(s => s.key);
 
-  // --- Question bank (hand-authored: every Verbal Reasoning question needs
-  // a real passage, so nothing here is procedurally generated) ---
+  // --- Question bank (Inference still needs real hand-authored passages —
+  // recognizing an inference PATTERN across variants is fine to keep fixed,
+  // unlike T/F/CS where a memorized fixed answer would defeat the point) ---
   let bankCache = {};
   let usedBankIds = new Set();
 
@@ -290,8 +291,166 @@
     };
   }
 
+  // --- True/False/Cannot Say: templated passages. The CORRECT ANSWER
+  // itself varies based on randomized values, not just the surface
+  // numbers — otherwise "statement 3 is always Cannot Say" could be
+  // memorized regardless of passage content, which would defeat the point. ---
+
+  function genEarningsScenario() {
+    const companies = ["TechCorp","NovaSystems","Meridian Software","BrightWave Inc","Solstice Digital"];
+    const drivers = ["cloud services","enterprise software","digital payments","data analytics"];
+    const secondaries = ["legacy hardware","on-premise licensing","physical retail","print media"];
+    const company = pick(companies);
+    const driver = pick(drivers);
+    const secondary = pick(secondaries.filter(d => d !== driver));
+    const revenue = randInt(20,80) * 10;
+    const yoyGrowth = pick([8,10,12,15,18,20]);
+    const marginBefore = randInt(15,25);
+    const marginDirection = pick(["up","down"]);
+    const marginChange = pick([1,2,3]);
+    const marginAfter = marginDirection === "up" ? marginBefore + marginChange : marginBefore - marginChange;
+    const secondaryDirection = pick(["declined","grew_slower","grew_faster"]);
+    const driverGrowth = yoyGrowth + randInt(3,10);
+    const secondaryGrowth = secondaryDirection === "declined" ? -randInt(2,8)
+      : secondaryDirection === "grew_slower" ? randInt(1, Math.max(1, driverGrowth-2))
+      : driverGrowth + randInt(2,8);
+    const secondaryClause = secondaryDirection === "declined"
+      ? `the ${secondary} division saw a decline in sales`
+      : `the ${secondary} division also grew, though at a different pace`;
+
+    const passageText = `${company} reported quarterly revenue of $${revenue}m, a ${yoyGrowth}% increase year-over-year, driven primarily by strong growth in its ${driver} division. However, operating margins ${marginDirection==="up"?"improved":"declined"} to ${marginAfter}% from ${marginBefore}% in the prior year, as the company ${marginDirection==="up"?"benefited from cost discipline":"increased investment in research and development"}. The CEO stated that despite ${marginDirection==="up"?"this progress":"short-term margin pressure"}, the company remains committed to long-term profitability targets. Analysts noted that while ${driver} revenue growth was robust, ${secondaryClause}.`;
+
+    let secondaryFasterExplanation;
+    if (secondaryDirection === "declined") secondaryFasterExplanation = `The ${secondary} division declined in sales while the ${driver} division grew — the opposite of what the statement claims.`;
+    else if (secondaryDirection === "grew_slower") secondaryFasterExplanation = `The ${secondary} division grew, but more slowly than the ${driver} division — so it did not grow faster.`;
+    else secondaryFasterExplanation = `In this case, the ${secondary} division actually grew faster than the ${driver} division, matching the statement.`;
+
+    const questions = [
+      { statement: `${company}'s operating margin increased year-over-year.`,
+        answer: marginDirection === "up" ? "True" : "False",
+        explanation: marginDirection === "up" ? `The passage states margins improved to ${marginAfter}% from ${marginBefore}%.` : `The passage states margins declined to ${marginAfter}% from ${marginBefore}%, the opposite of an increase.` },
+      { statement: `The ${driver} division was the primary driver of revenue growth.`,
+        answer: "True",
+        explanation: `The passage directly states growth was "driven primarily by strong growth in its ${driver} division."` },
+      { statement: `${company} plans to reduce R&D spending next year.`,
+        answer: "Cannot Say",
+        explanation: `The passage only discusses this period's margin drivers — it says nothing about future R&D plans.` },
+      { statement: `The ${secondary} division grew faster than the ${driver} division.`,
+        answer: secondaryGrowth > driverGrowth ? "True" : "False",
+        explanation: secondaryFasterExplanation },
+    ];
+    return { passageText, questions };
+  }
+
+  function genAcquisitionScenario() {
+    const sectors = ["manufacturing","logistics","specialty chemicals","industrial equipment","packaging"];
+    const sector = pick(sectors);
+    const total = randInt(15,60) * 10;
+    const equityPct = pick([25,30,35,40,45,55,60,65]);
+    const equity = Math.round(total * equityPct/100);
+    const debt = total - equity;
+    const approvalStatus = pick(["pending","received"]);
+    const managementStatus = pick(["remain","review"]);
+    const quarters = pick([1,2,3]);
+
+    const passageText = `A private equity firm completed the acquisition of a mid-sized ${sector} company for $${total}m, funded through a combination of $${equity}m in equity and the remainder in debt financing. The deal is expected to close within the next ${quarters} quarter${quarters>1?"s":""}, ${approvalStatus==="pending" ? "pending regulatory approval" : "having already received all necessary regulatory approvals"}. The firm's stated strategy involves consolidating the target's operations with an existing portfolio company to realize cost synergies. ${managementStatus==="remain" ? "Management of the target company will remain in place following the transaction" : "Management of the target company will be reviewed following the transaction"}, according to the firm's press release.`;
+
+    const questions = [
+      { statement: `The deal was funded with more debt than equity.`,
+        answer: debt > equity ? "True" : "False",
+        explanation: `Debt = ${total} − ${equity} = ${debt}m, versus ${equity}m of equity — ${debt>equity ? "debt is larger." : "equity is actually larger here."}` },
+      { statement: `The acquisition has already received regulatory approval.`,
+        answer: approvalStatus === "received" ? "True" : "False",
+        explanation: approvalStatus === "received" ? `The passage states approvals have already been received.` : `The passage says the deal is "pending regulatory approval" — it has not yet been received.` },
+      { statement: `The private equity firm plans to replace the target's management team.`,
+        answer: managementStatus === "remain" ? "False" : "Cannot Say",
+        explanation: managementStatus === "remain" ? `The passage explicitly states management "will remain in place."` : `The passage says management will be "reviewed" — this doesn't confirm they'll be replaced.` },
+      { statement: `The ${sector} company was founded more than 20 years ago.`,
+        answer: "Cannot Say",
+        explanation: `The passage gives no information about when the company was founded.` },
+    ];
+    return { passageText, questions };
+  }
+
+  function genIPOScenario() {
+    const duration = pick([1,2,3]);
+    const regionOptions = ["", "in the technology sector ", "in the biotech sector ", "in the consumer sector "];
+    const region = pick(regionOptions);
+    const passageText = `Despite a slowdown in IPO activity over the past ${duration} year${duration>1?"s":""}, several large ${region}companies have recently filed for public listings, signaling renewed investor confidence. Underwriters report strong early demand for these offerings, particularly from institutional investors seeking growth exposure. However, market volatility remains a concern, with some bankers cautioning that pricing could be challenging if broader equity markets weaken before the listings are completed. One senior banker noted that companies are keeping flexible timelines to allow for market conditions to improve if needed.`;
+
+    const claimedDuration = Math.random() < 0.6 ? duration : pick([1,2,3].filter(d => d !== duration));
+    const questions = [
+      { statement: `IPO activity has been declining for the past ${claimedDuration} year${claimedDuration>1?"s":""}.`,
+        answer: claimedDuration === duration ? "True" : "False",
+        explanation: claimedDuration === duration ? `The passage states a slowdown "over the past ${duration} year${duration>1?"s":""}," matching the statement.` : `The passage states the slowdown has lasted ${duration} year${duration>1?"s":""}, not ${claimedDuration}.` },
+      { statement: `All recent IPO filings have been oversubscribed.`,
+        answer: "Cannot Say",
+        explanation: `The passage mentions "strong early demand" generally, but never states all filings were oversubscribed.` },
+      { statement: `Bankers are certain that market volatility will not affect pricing.`,
+        answer: "False",
+        explanation: `Bankers are described as cautioning pricing "could be challenging" — the opposite of certainty it won't be affected.` },
+      { statement: `Companies filing for IPOs are prepared to delay their listings if needed.`,
+        answer: "True",
+        explanation: `The passage states companies "are keeping flexible timelines to allow for market conditions to improve if needed."` },
+    ];
+    return { passageText, questions };
+  }
+
+  function genRestructuringScenario() {
+    const savingsTarget = randInt(20,80) * 10;
+    const workforcePct = pick([2,3,4,5,6,8]);
+    const severancePct = pick([20,30,40,50,60,110,120]);
+    const severance = Math.round(savingsTarget * severancePct/100);
+    const protectedFns = pick([["technology","compliance"],["risk management","legal"],["technology","operations"]]);
+    const affectedDivision = pick(["trading","investment banking","sales","research"]);
+
+    const passageText = `A global investment bank announced a restructuring plan aimed at reducing annual costs by $${savingsTarget}m, primarily through headcount reductions in its ${affectedDivision} division. The bank stated that approximately ${workforcePct}% of its global workforce would be affected, with most reductions concentrated in underperforming regions. Severance costs related to the restructuring are expected to total $${severance}m, to be recognized over the next two quarters. The bank's CEO emphasized that the restructuring would not affect its ${protectedFns[0]} or ${protectedFns[1]} functions, which remain priority areas for continued investment.`;
+
+    const askAboutProtected = Math.random() < 0.5;
+    const targetFn = askAboutProtected ? pick(protectedFns) : affectedDivision;
+    const thresholdPct = pick([3,5,8,10]);
+
+    const questions = [
+      { statement: `The restructuring will primarily affect the bank's ${targetFn} function.`,
+        answer: askAboutProtected ? "False" : "True",
+        explanation: askAboutProtected
+          ? `The CEO explicitly said the restructuring "would not affect its ${protectedFns[0]} or ${protectedFns[1]} functions."`
+          : `The passage states reductions are primarily in the ${affectedDivision} division.` },
+      { statement: `Severance costs will exceed the total cost savings target.`,
+        answer: severance > savingsTarget ? "True" : "False",
+        explanation: `Severance is $${severance}m versus a $${savingsTarget}m savings target — ${severance>savingsTarget ? "severance is larger." : "severance is well below the target."}` },
+      { statement: `The restructuring affects less than ${thresholdPct}% of the bank's global workforce.`,
+        answer: workforcePct < thresholdPct ? "True" : "False",
+        explanation: `The passage states approximately ${workforcePct}% of the workforce is affected, which is ${workforcePct<thresholdPct ? "less" : "not less"} than ${thresholdPct}%.` },
+      { statement: `The bank plans to increase investment in ${pick(protectedFns)}.`,
+        answer: "Cannot Say",
+        explanation: `The passage says this function "remains a priority area for continued investment" — continued is not the same as increased.` },
+    ];
+    return { passageText, questions };
+  }
+
+  const PASSAGE_GENERATORS = [genEarningsScenario, genAcquisitionScenario, genIPOScenario, genRestructuringScenario];
+
+  function genTrueFalseCannotSay() {
+    const scenario = pick(PASSAGE_GENERATORS)();
+    const q = pick(scenario.questions);
+    return {
+      text: q.statement,
+      questionData: { type: "passage", text: scenario.passageText },
+      options: ["True","False","Cannot Say"],
+      answer: q.answer,
+      explanation: q.explanation,
+    };
+  }
+
+  const GENERATORS = {
+    true_false_cannot_say: [genTrueFalseCannotSay],
+  };
+
   function generateQuestion(subskillKey) {
-    return generateBankQuestion(subskillKey);
+    if (BANK_KEYS.includes(subskillKey)) return generateBankQuestion(subskillKey);
+    const gen = pick(GENERATORS[subskillKey]);
+    return { options: null, questionData: null, questionId: null, ...gen(), subskillKey };
   }
 
   // --- Rendering question_data (passages) ---
