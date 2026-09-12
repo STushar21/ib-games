@@ -222,28 +222,15 @@
   .dc-cell.dc-wrong { border-color: var(--red); background: var(--red-soft); }
   .dc-line { stroke: var(--gold); stroke-width: 2.5; }
 
-  .dw-scenario { background: var(--bg); border: 1px solid var(--border); border-radius: 7px; padding: 14px 18px; margin-bottom: 20px; font-size: 12.5px; color: var(--ink-soft); text-align: left; line-height: 1.8; }
+  .dw-scenario { background: var(--bg); border: 1px solid var(--border); border-radius: 7px; padding: 14px 18px; margin-bottom: 18px; font-size: 12.5px; color: var(--ink-soft); text-align: left; line-height: 1.8; }
   .dw-scenario b { color: var(--ink); font-family: 'IBM Plex Mono', monospace; }
-  .dw-inputs { display: flex; flex-direction: column; gap: 10px; max-width: 380px; margin: 0 auto 16px; }
-  .dw-input-row {
-    display: flex; align-items: center; justify-content: space-between; gap: 10px;
-    background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px;
-    transition: border-color 0.15s ease, background 0.15s ease;
+  #dw-answer-input {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 5px;
+    padding: 12px 16px; font-size: 17px; font-family: 'IBM Plex Mono', monospace; font-weight: 600;
+    width: 160px; text-align: center; color: var(--ink);
   }
-  .dw-input-row.dw-correct { border-color: var(--green); background: var(--green-soft); }
-  .dw-input-row.dw-wrong { border-color: var(--red); background: var(--red-soft); }
-  .dw-input-label { font-size: 11.5px; color: var(--ink-soft); text-align: left; flex: 1; }
-  .dw-input-row input {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 5px;
-    padding: 8px 10px; font-size: 13px; font-family: 'IBM Plex Mono', monospace; font-weight: 600;
-    width: 100px; text-align: right; color: var(--ink);
-  }
-  .dw-input-row input:focus { outline: none; border-color: var(--gold-dim); }
-  .dw-check-btn {
-    background: var(--gold); color: var(--bg); border: none; border-radius: 999px;
-    padding: 12px 26px; font-weight: 700; cursor: pointer; font-size: 13px; letter-spacing: 0.04em;
-  }
-  .dw-msg { font-size: 11.5px; color: var(--ink-faint); margin-top: 10px; min-height: 14px; }
+  #dw-answer-input:focus { outline: none; border-color: var(--gold-dim); }
+  .dw-msg { font-size: 11.5px; color: var(--ink-soft); margin-top: 14px; min-height: 14px; line-height: 1.6; }
 
   .rl-target { font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 700; color: var(--gold); margin-bottom: 4px; }
   .rl-current { font-family: 'IBM Plex Mono', monospace; font-size: 15px; color: var(--ink-soft); margin-bottom: 22px; }
@@ -522,7 +509,7 @@
 <div id="play-screen-dw" style="display:none;">
   <div class="play-head"><button class="play-back" id="back-btn-dw" type="button">&larr; Back to games</button></div>
   <div class="hud-row">
-    <div class="stat-chip"><div class="label">Solved</div><div class="value" id="dw-score">0</div></div>
+    <div class="stat-chip"><div class="label">Score</div><div class="value" id="dw-score">0</div></div>
     <div class="timer-ring">
       <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="52"></circle><circle class="ring-fill" id="dw-ring-fill" cx="60" cy="60" r="52"></circle></svg>
       <div class="ring-label" id="dw-time">90</div>
@@ -530,10 +517,12 @@
     <div class="stat-chip"><div class="label">Best</div><div class="value best" id="dw-best">—</div></div>
   </div>
   <div class="question-stage compact" id="dw-question-stage">
-    <div class="q-text">Work the waterfall, tier by tier</div>
     <div class="dw-scenario" id="dw-scenario"></div>
-    <div class="dw-inputs" id="dw-inputs"></div>
-    <button type="button" class="dw-check-btn" id="dw-check-btn">Check</button>
+    <div class="q-text" id="dw-q-text" style="font-size:19px;"></div>
+    <div class="answer-row">
+      <input type="text" id="dw-answer-input" inputmode="decimal" placeholder="$m" autocomplete="off">
+      <button type="button" id="dw-submit-btn">Submit</button>
+    </div>
     <div class="dw-msg" id="dw-msg"></div>
   </div>
 </div>
@@ -805,18 +794,18 @@
       title: "Distribution Waterfall",
       howto: [
         "You're given a fund's invested capital, preferred return rate, carry split, and total exit proceeds.",
-        "Fill in four amounts, tier by tier: Return of Capital, Preferred Return, then the LP and GP shares of whatever's left over.",
-        "Each tier only gets paid once the tier before it is fully satisfied — sometimes proceeds run out partway through.",
+        "Each round asks for just one tier's amount — Return of Capital, Preferred Return, or the LP/GP residual split.",
+        "Sometimes proceeds run out partway through, so a later tier can correctly be zero.",
       ],
       scoring: [
-        "+1 point per waterfall solved (all four amounts correct).",
-        "A failed Check costs 4 seconds — but doesn't reset your numbers, just fix what's wrong and check again.",
+        "+1 point per correct tier.",
+        "A wrong answer costs 4 seconds — the full breakdown is shown either way so you can check your working.",
         "Session ends when the 90-second timer hits zero.",
       ],
       tips: [
-        "Work top-down: Return of Capital first, then Preferred Return, only splitting the residual by carry once both are fully paid.",
-        "If proceeds don't cover Return of Capital, every later tier is zero — don't skip ahead.",
-        "The LP and GP residual shares always add up to exactly what's left after the first two tiers — a good way to sanity-check your own numbers.",
+        "Work top-down in your head even though you're only asked for one number: Return of Capital, then Preferred Return, only then the residual split.",
+        "If proceeds don't cover Return of Capital, everything after it is zero — check that first.",
+        "The LP and GP residual shares always add up to exactly what's left after the first two tiers.",
       ],
       why: "This is a real distribution waterfall — one of the most commonly asked PE technical questions (\"walk me through how proceeds get distributed\"), and the tier logic here is exactly how it works in practice, not a puzzle abstraction.",
     },
@@ -1681,13 +1670,6 @@
   // =====================================================================
   // GAME 6 — Distribution Waterfall
   // =====================================================================
-  const DW_FIELDS = [
-    { key: "roc", label: "① Return of Capital (LP)" },
-    { key: "pref", label: "② Preferred Return (LP)" },
-    { key: "lpResidual", label: "③ Residual to LP" },
-    { key: "gpResidual", label: "④ Residual to GP (Carry)" },
-  ];
-
   function generateWaterfallRound() {
     const investedCapital = randInt(5, 20) * 10;
     const prefPct = pick([6, 7, 8, 9, 10]);
@@ -1714,19 +1696,25 @@
     return {
       investedCapital, prefPct, prefAmount, lpCarryPct, gpCarryPct, proceeds,
       correct: { roc, pref, lpResidual, gpResidual },
-      input: { roc: "", pref: "", lpResidual: "", gpResidual: "" },
     };
   }
 
   const DW_TOTAL_TIME = 90;
-  let dwTimeLeft = DW_TOTAL_TIME, dwDeadline = 0, dwScore = 0, dwRound = null, dwInterval = null, dwRunning = false;
+  const DW_ASK_TYPES = [
+    { key: "roc", label: "Return of Capital", question: "How much does the LP receive as Return of Capital ($m)?" },
+    { key: "pref", label: "Preferred Return", question: "How much does the LP receive as Preferred Return ($m)?" },
+    { key: "lpResidual", label: "LP's residual share", question: "What is the LP's share of the residual, after Return of Capital and Preferred Return ($m)?" },
+    { key: "gpResidual", label: "GP's carry", question: "What is the GP's carry — its share of the residual ($m)?" },
+  ];
+  let dwTimeLeft = DW_TOTAL_TIME, dwDeadline = 0, dwScore = 0, dwRound = null, dwAsk = null, dwInterval = null, dwRunning = false, dwLocked = false;
 
   const dwScoreEl = document.getElementById("dw-score");
   const dwTimeEl = document.getElementById("dw-time");
   const dwBestEl = document.getElementById("dw-best");
   const dwRing = document.getElementById("dw-ring-fill");
   const dwScenarioEl = document.getElementById("dw-scenario");
-  const dwInputsEl = document.getElementById("dw-inputs");
+  const dwQText = document.getElementById("dw-q-text");
+  const dwAnswerInput = document.getElementById("dw-answer-input");
   const dwStage = document.getElementById("dw-question-stage");
   const dwMsg = document.getElementById("dw-msg");
   dwRing.style.strokeDasharray = String(RING_CIRC);
@@ -1736,7 +1724,7 @@
 
   function startDW() {
     currentGame = "distribution_waterfall";
-    dwScore = 0; dwTimeLeft = DW_TOTAL_TIME; dwDeadline = Date.now() + DW_TOTAL_TIME * 1000; dwRunning = true;
+    dwScore = 0; dwTimeLeft = DW_TOTAL_TIME; dwDeadline = Date.now() + DW_TOTAL_TIME * 1000; dwRunning = true; dwLocked = false;
     dwScoreEl.textContent = "0";
     dwTimeEl.textContent = String(DW_TOTAL_TIME);
     dwRing.style.strokeDashoffset = "0";
@@ -1763,10 +1751,15 @@
 
   function dwNextRound() {
     if (!dwRunning) return;
+    dwLocked = false;
     dwRound = generateWaterfallRound();
+    dwAsk = pick(DW_ASK_TYPES);
     dwMsg.textContent = "";
     dwRenderScenario();
-    dwRenderInputs();
+    dwQText.textContent = dwAsk.question;
+    dwAnswerInput.value = "";
+    dwAnswerInput.disabled = false;
+    dwAnswerInput.focus();
   }
 
   function dwRenderScenario() {
@@ -1779,58 +1772,41 @@
     `;
   }
 
-  function dwRenderInputs() {
-    dwInputsEl.innerHTML = DW_FIELDS.map(f => `
-      <div class="dw-input-row" data-field="${f.key}">
-        <span class="dw-input-label">${f.label}</span>
-        <input type="text" inputmode="decimal" data-key="${f.key}" placeholder="$m">
-      </div>
-    `).join("");
-  }
+  function dwSubmit() {
+    if (!dwRunning || dwLocked) return;
+    const raw = dwAnswerInput.value.trim();
+    if (raw === "") return;
+    dwLocked = true;
+    dwAnswerInput.disabled = true;
 
-  function dwCheck() {
-    if (!dwRunning) return;
-    const rows = dwInputsEl.querySelectorAll(".dw-input-row");
-    let allFilled = true, allCorrect = true;
+    const val = parseFloat(raw);
+    const target = dwRound.correct[dwAsk.key];
+    const correct = !Number.isNaN(val) && Math.abs(val - target) < 0.5;
+    const c = dwRound.correct;
+    const breakdown = `Full breakdown: ROC $${c.roc}m → Preferred $${c.pref}m → LP residual $${c.lpResidual}m / GP carry $${c.gpResidual}m.`;
 
-    rows.forEach(row => {
-      const key = row.dataset.field;
-      const input = row.querySelector("input");
-      const val = parseFloat(input.value);
-      row.classList.remove("dw-correct", "dw-wrong");
-      if (input.value.trim() === "" || Number.isNaN(val)) { allFilled = false; return; }
-      const correct = Math.abs(val - dwRound.correct[key]) < 0.5;
-      row.classList.add(correct ? "dw-correct" : "dw-wrong");
-      if (!correct) allCorrect = false;
-    });
-
-    if (!allFilled) {
-      dwMsg.textContent = "Fill every field first.";
-      return;
-    }
-
-    if (allCorrect) {
+    if (correct) {
       dwScore += 1;
       dwScoreEl.textContent = String(dwScore);
       pulse(dwScoreEl);
       flashStage(dwStage, "flash-correct");
-      dwMsg.textContent = "Correct — every tier checks out.";
-      setTimeout(() => {
-        if (dwTimeLeft <= 0) { dwEnd(); return; }
-        dwNextRound();
-      }, 800);
+      dwMsg.textContent = `Correct. ${breakdown}`;
     } else {
       dwDeadline -= 4000;
       dwTimeLeft = Math.max(0, Math.round((dwDeadline - Date.now()) / 1000));
       dwUpdateTimer();
       flashStage(dwStage, "flash-wrong");
-      const c = dwRound.correct;
-      dwMsg.textContent = `Some tiers are off. Correct: ROC $${c.roc}m, Pref $${c.pref}m, LP residual $${c.lpResidual}m, GP residual $${c.gpResidual}m.`;
-      if (dwTimeLeft <= 0) dwEnd();
+      dwMsg.textContent = `Not quite — ${dwAsk.label} is $${target}m. ${breakdown}`;
     }
+
+    setTimeout(() => {
+      if (dwTimeLeft <= 0) { dwEnd(); return; }
+      dwNextRound();
+    }, correct ? 900 : 1600);
   }
 
-  document.getElementById("dw-check-btn").addEventListener("click", dwCheck);
+  document.getElementById("dw-submit-btn").addEventListener("click", dwSubmit);
+  dwAnswerInput.addEventListener("keydown", (e) => { if (e.key === "Enter") dwSubmit(); });
 
   async function dwEnd() {
     dwRunning = false;
